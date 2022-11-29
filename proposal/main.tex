@@ -16,42 +16,40 @@
 % If there is an existing implementation, specify how you would use it and what your contribution will be.
 % This could be: 
 
-With the advent of recent technologies, multi-view RGB-D acquisitions have become the prevalent way of information gathering in operating rooms (OR).
-Previous works\footnote{Bachelor-Thesis written by Tony Wang last semester. If interested, it could be disclosed to the Übungsleitung :)} established the benefits of using 3D information to detect and anonymize faces in 2D images.
-However, real world 3D data often suffers from noisy and incomplete point clouds, which yields in erroneous alignments using probabilistic point set alignment methods like coherent point drift (CPD)~\cite{cpd} and its variants.
-In this project, we address this issue by creating and fine-tuning a deep learning based point set alignment method to achieve more robust rigid transformations on noisy and incomplete point clouds from real world data.
+With the advent of recent technologies, multi-view RGB-D recordings have become the prevalent way of information gathering in operating rooms (OR).
+Previous works established the benefits of using 3D information to detect and anonymize faces of 2D images in such multi-view settings~\cite{disguisor}.
+However, real world 3D data often suffers from noisy and incomplete point clouds, which yield erroneous alignments using probabilistic point set alignment methods like coherent point drift (CPD)~\cite{cpd} and its variants.
+In this project, we address this issue by creating and fine-tuning a deep learning based point set registration method to achieve more robust rigid transformations on noisy and incomplete point clouds from real world data.
 Our contributions are as follows:
  
 \begin{itemize}
 \itemsep0em
 	\item We compile a new synthetic dataset consisting of different head alignment problems
+	\item We adapt the DCP method to replace the rigid registration step of the works of Bastian and Wang et al.~\cite{disguisor}
 	\item We show qualitative (maybe quantitative) results of the pre-trained and our fine-tuned model on data acquired from real world applications
 \end{itemize}
 
 
-\section{Methods}
+\section{Requirements}
 
-Our goal is to align a given head mesh to the point cloud using a rigid registration. 
-Previous works have used off-the-shelf methods like FilterReg~\cite{filterreg} to align the mesh to the point cloud. 
-However, inadequate mesh estimations, sparse and incomplete point clouds make it unreliable in certain situations to rely on probabilistic methods.
+\subsection{Overview}
+The work of Bastian and Wang et al.~\cite{disguisor} have introduced a method to detect and anonymize people's faces in the OR by leveraging 3D data.
+In their pipeline they perform a rigid registration between the mesh of a head and a cropped point cloud by using the off-the-shelf method FilterReg~\cite{filterreg} and iterative closest point (ICP)~\cite{icp} to align the mesh to the point cloud. 
+However, inadequate mesh estimations, sparse and incomplete point clouds make it unreliable in certain situations to use probabilistic methods.
+Our goal is to develop a neural network based rigid point set registration method to align a given head mesh to the point cloud by using the architecture of DCP~\cite{dcp}.
 Fig.~\ref{fig:example_mesh} depicts the upper body of a parametric human mesh model with the point cloud data.
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[width=0.95\columnwidth]{figures/issue_pointcloud.png}
-    \caption{An estimated parametric human mesh model with the point cloud. For a rigid registration it would be necessary to extract the head of the mesh.}
+    \includegraphics[width=0.65\columnwidth]{figures/issue_pointcloud.png}
+    \caption{The upper body of an estimated parametric human mesh model with the point cloud. For a rigid registration it would be necessary to extract the head of the mesh.}
     \label{fig:example_mesh}
 \end{figure}
 
-We use the architecture of Deep Closest Point~\cite{dcp} to train our model.
-To fine-tune the model on a synthetic dataset to adapt it further to our use-case.
-We generate the synthetic dataset by sampling different human poses using the parametric human mesh model SMPL~\cite{SMPL:2015} and converting it to a point cloud.
-Then, we copy the head, dis-align it and apply noise on the original SMPL model point cloud.
-
-The experiments for our evaluation will be performed on data acquired in a simulated OR from the chair of Computer Aided Medical Procedures (CAMP) at TUM (Fig.~\ref{fig:example_pcd}).
-The data consists of six point clouds captured with six ceiling mounted Microsoft Azure Kinect cameras.
-
-We could further evaluate our approach quantitatively by annotating face bounding boxes on the 2D images and reprojecting the head meshes back in 2D.
+\subsection{Dataset}
+The data used in Bastian and Wang et al.~\cite{disguisor} are still undisclosed, hence we perform our experiments on different data.
+The data we use was acquired from the chair of Computer Aided Medical Procedures (CAMP) at TUM (Fig.~\ref{fig:example_pcd}) by capturing a simulated OR environment from six calibrated ceiling mounted Microsoft Azure Kinect cameras.
+Each frame consists of six RGB images and a fused point cloud of the scene.
 
 \begin{figure}[!ht]
     \centering
@@ -60,12 +58,25 @@ We could further evaluate our approach quantitatively by annotating face boundin
     \label{fig:example_pcd}
 \end{figure}
 
-% List your requirements, e.g. dataset, which type of data you need for your approach (SDF, point clouds, etc.) and how you will generate them from the dataset you want to use.
+\subsection{Methods}
 
+\textbf{Training} The authors of DCP~\cite{dcp} already published their code base on GitHub\footnote{https://github.com/WangYueFt/dcp}.
+We will first use their pre-trained model qualitatively compare their method against existing methods like FilterReg~\cite{filterreg} or ICP~\cite{icp}.
+Subsequently, we extend the ModelNet 40~\cite{modelnet40} dataset to adapt it to our use case.
+Apart from augmenting the ModelNet 40 dataset by mirroring real life data (noise and sparseness), we add synthetic data that resembles our use case.
+More specifically, we generate synthetic dataset by sampling different human poses using the parametric human mesh model SMPL~\cite{SMPL:2015} and converting it to a point cloud. 
+We copy the head, apply a random transformation to it and perform several augmentation on the original SMPL model point cloud.
+
+\noindent\textbf{Evaluation}
+We will evaluate our approach qualitatively.
+Evaluating our approach quantitatively might become difficult, as there is no ground truth data available for our dataset.
+Moreover, generating ground truth is not trivial, since the transformation can be ambiguous if the point cloud is incomplete.
+We could, however, evaluate our approach quantitatively using the method introduced in Bastian and Wang et al.~\cite{disguisor} by annotating face bounding boxes in the 2D images and rendering the head meshes back into the 2D images.
+
+% List your requirements, e.g. dataset, which type of data you need for your approach (SDF, point clouds, etc.) and how you will generate them from the dataset you want to use.
 
 \section{Team}
 Tony Wang 03726379
-
 
 % references
 {\small

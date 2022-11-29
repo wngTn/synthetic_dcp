@@ -8,8 +8,7 @@ jobs:
     container: texlive/texlive:latest
 
     steps:
-    - uses: actions/checkout@v2
-    - working-directory: ./proposal
-
+    - uses: actions/checkout@v3
     - name: Build pdf
+      working-directory: ./proposal
       run: make pdf

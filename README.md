@@ -12,6 +12,7 @@ Download the trial data under this location: `./data/trial`
 
 ## File Structure ##
 
+```
 .
 ├── README.md
 ├── data
@@ -25,7 +26,7 @@ Download the trial data under this location: `./data/trial`
 ├── pretrained
 ├── proposal
 └── util.py
-
+```
 
 ## Prerequisites 
 PyTorch>=1.0: https://pytorch.org

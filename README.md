@@ -10,6 +10,14 @@ We did not create them, do not prosecute us.
 
 Download the trial data under this location: `./data/trial`
 
+## Debugging ##
+
+Use debug.py and the key maps are:
+- A for advance
+- S for going bac
+- Q for the next person
+- D for closing the whole debugger
+
 ## File Structure ##
 
 ```

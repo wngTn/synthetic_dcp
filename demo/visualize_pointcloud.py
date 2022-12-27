@@ -2,6 +2,7 @@ import open3d as o3d
 import open3d.visualization.gui as gui
 import os
 
+
 def visualize_pointcloud(vis, frame_id):
     for cam in [f"cn0{i+1}" for i in range(6)]:
         file_id = str(frame_id).zfill(4)

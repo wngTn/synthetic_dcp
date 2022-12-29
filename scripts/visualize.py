@@ -6,8 +6,8 @@ import sys
 import pathlib
 
 sys.path.insert(0, str(pathlib.Path().resolve() / "lib"))
-from lib.utils.util import load_mesh
-from lib.utils.indices import HEAD
+from utils.util import load_mesh
+from utils.indices import HEAD
 
 
 FRAME_ID = 2010

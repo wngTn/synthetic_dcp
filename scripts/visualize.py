@@ -6,13 +6,13 @@ import sys
 import pathlib
 
 sys.path.insert(0, str(pathlib.Path().resolve() / "lib"))
-from utils.util import load_mesh
-from utils.indices import HEAD
+from utils.util import load_mesh, add_gear_to_smpl_mesh
 
 
-FRAME_ID = 2010
+FRAME_ID = 1020
 # Whether to only show the head
 EXTRACT_HEAD = True
+EXTRACT_JOINTS = False
 
 
 def main():
@@ -28,16 +28,40 @@ def main():
         path_to_pcd = data_dir / cam / f"{str(FRAME_ID).zfill(4)}_pointcloud.ply"
         assert os.path.exists(path_to_pcd)
 
-        vis.add_geometry(f"PCD {cam}", o3d.io.read_point_cloud(str(path_to_pcd)))
+        #vis.add_geometry(f"PCD {cam}", o3d.io.read_point_cloud(str(path_to_pcd)))
 
     meshes = load_mesh(Path("data", "mesh_files"), FRAME_ID)
+    
 
     for i, mesh in enumerate(meshes):
-        mesh.paint_uniform_color([0.7, 0.9, 0.9])
-        # Extracts the head
-        if EXTRACT_HEAD:
-            mesh.remove_vertices_by_index(list(set(range(6890)) - set(HEAD)))
-        vis.add_geometry(f"mesh_{i}", mesh)
+    
+        meshes_i = add_gear_to_smpl_mesh(mesh, EXTRACT_HEAD, get_individual = True, glasses = True)
+        
+        
+        
+        vis.add_geometry(f"mesh_{i}", meshes_i[0])
+        
+        pcd_mask = o3d.geometry.PointCloud()
+        pcd_mask.points = o3d.utility.Vector3dVector(meshes_i[1].vertices)
+        vis.add_geometry(f"mask_{i}", pcd_mask)
+    
+
+        pcd_hat = o3d.geometry.PointCloud()
+        pcd_hat.points = o3d.utility.Vector3dVector(meshes_i[2].vertices)
+        vis.add_geometry(f"hat_{i}", pcd_hat)
+
+        pcd_glasses = o3d.geometry.PointCloud()
+        pcd_glasses.points = o3d.utility.Vector3dVector(meshes_i[3].vertices)
+        vis.add_geometry(f"glasses_{i}", pcd_glasses)
+
+
+        merged_pcd = o3d.geometry.PointCloud()
+        merged_pcd.points = o3d.utility.Vector3dVector(meshes_i[4].vertices)
+        
+        
+        vis.add_geometry(f"merged_mesh{i}", meshes_i[4])
+        vis.add_geometry(f"merged_pcd{i}", merged_pcd)
+
 
     app.add_window(vis)
     app.run()

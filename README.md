@@ -18,6 +18,16 @@ Use debug.py and the key maps are:
 - Q for the next person
 - D for closing the whole debugger
 
+## Synthetic SMPL Poses ##
+
+The parameters for synthetically created SMPL poses can be found [here](https://nextcloud.in.tum.de/index.php/s/H9W8rAAoHiXHjfz) (128MB).
+
+It has over 90k different poses sampled from the HumanAct12 dataset.
+
+![SMPL POses](assets/smpl_poses.gif)
+This GIF visualizes 100 poses; it was created with `scripts/peak_synthetic_smpl.py`
+
+
 ## File Structure ##
 
 ```
@@ -27,6 +37,8 @@ Use debug.py and the key maps are:
 │   ├── mesh_files
 │	├── smpl_models 
 │   └── trial
+├── scripts
+│   ├── ...
 ├── data.py
 ├── demo
 ├── main.py

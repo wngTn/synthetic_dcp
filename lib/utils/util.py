@@ -19,14 +19,20 @@ import copy
 
 # Part of the code is referred from: https://github.com/ClementPinard/SfmLearner-Pytorch/blob/master/inverse_warp.py
 
+
 def get_rotation_matrix(vec2, vec1):
     r = R.align_vectors(vec2, vec1)
     return r[0].as_matrix()
 
 
-def add_gear_to_smpl_mesh(mesh, extract_head = True, get_individual = False, hat = True, mask = True, glasses = False):
+def add_gear_to_smpl_mesh(mesh,
+                          extract_head=True,
+                          get_individual=False,
+                          hat=True,
+                          mask=True,
+                          glasses=False):
     meshes = [mesh]
-    
+
     # index of vertices on the smpl mesh
     # multiply by one to copy them (removing the head changes the referenced values unfortunately)
     ear_left = mesh.vertices[6887] * 1
@@ -34,39 +40,39 @@ def add_gear_to_smpl_mesh(mesh, extract_head = True, get_individual = False, hat
     mid = 0.5 * (ear_left + ear_right)
     nose = mesh.vertices[332] * 1
     top_of_head_vec = mesh.vertices[412] * 1
-        
+
     # extract a new coordinate system fitting the head position
     # compute a rotation matrix for change of basis (standard basis to "head-basis")
-    R = get_rotation_matrix(np.array([mid - ear_left, top_of_head_vec - mid, nose - mid]).reshape(-1, 3), np.eye(3))
+    R = get_rotation_matrix(
+        np.array([mid - ear_left, top_of_head_vec - mid, nose - mid]).reshape(-1, 3), np.eye(3))
 
     # Extracts the head
     if extract_head:
         mesh.remove_vertices_by_index(list(set(range(6890)) - set(HEAD)))
-        
-        
-    if mask:            
-        mask_mesh= o3d.io.read_triangle_mesh(str("./data/wearables/medical_mask.obj"))
-        mask_mesh.rotate(R, center=(0,0,0))
+
+    if mask:
+        mask_mesh = o3d.io.read_triangle_mesh(str("./data/wearables/medical_mask.obj"))
+        mask_mesh.rotate(R, center=(0, 0, 0))
         mask_mesh.translate(nose)
         mask_mesh.scale(1.10, center=mask_mesh.get_center())
 
         meshes.append(mask_mesh)
-    
-    if hat: 
+
+    if hat:
         hat_mesh = o3d.io.read_triangle_mesh(str("./data/wearables/hat.ply"))
         hat_mesh.scale(2.75, center=hat_mesh.get_center())
-        hat_mesh.rotate(R, center=(0,0,0))
+        hat_mesh.rotate(R, center=(0, 0, 0))
         hat_mesh.translate(mid)
-        
+
         meshes.append(hat_mesh)
 
     if glasses:
         glasses_mesh = o3d.io.read_triangle_mesh(str("./data/wearables/glasses.obj"))
-            
+
         glasses_mesh.scale(1, center=glasses_mesh.get_center())
-        glasses_mesh.rotate(R, center=(0,0,0))
+        glasses_mesh.rotate(R, center=(0, 0, 0))
         glasses_mesh.translate(nose)
-        
+
         meshes.append(glasses_mesh)
 
     merged = copy.deepcopy(mesh)
@@ -76,11 +82,10 @@ def add_gear_to_smpl_mesh(mesh, extract_head = True, get_individual = False, hat
     if get_individual:
         meshes.append(merged)
         return meshes
-    
+
     return merged
-    
-    
-    
+
+
 def quat2mat(quat):
     x, y, z, w = quat[:, 0], quat[:, 1], quat[:, 2], quat[:, 3]
 
@@ -176,12 +181,19 @@ def load_joints(data_dir: str, frame_id):
 
         # gets the vertices
         vertices = body_model(
-            poses, shapes, Rh, Th, return_verts=False, return_tensor=False, return_smpl_joints=True,
+            poses,
+            shapes,
+            Rh,
+            Th,
+            return_verts=False,
+            return_tensor=False,
+            return_smpl_joints=True,
         )[0]
-        
+
         frame_pcds.append(vertices)
 
     return frame_pcds
+
 
 def load_mesh(data_dir: str, frame_id):
     """
@@ -205,10 +217,7 @@ def load_mesh(data_dir: str, frame_id):
         shapes = frame["shapes"]
 
         # gets the vertices
-        vertices = body_model(
-            poses, shapes, Rh, Th, return_verts=True, return_tensor=False
-        )[0]
-        
+        vertices = body_model(poses, shapes, Rh, Th, return_verts=True, return_tensor=False)[0]
 
         # the mesh
         model = create_mesh(vertices=vertices, faces=body_model.faces)

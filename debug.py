@@ -35,7 +35,7 @@ def main():
     merged_meshes = []
 
     for mesh in meshes:
-        merged_meshes.append(add_gear_to_smpl_mesh(mesh))
+        merged_meshes.append(add_gear_to_smpl_mesh(mesh, hat=True))
 
 
     registration_params_filterreg = {}

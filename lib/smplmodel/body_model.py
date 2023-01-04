@@ -135,6 +135,7 @@ class SMPLlayer(nn.Module):
 
         self.nVertices = self.v_template.shape[0]
         # indices of parents for each joints
+        self.kintree_table = data['kintree_table']
         parents = to_tensor(to_np(data["kintree_table"][0])).long()
         parents[0] = -1
         self.register_buffer("parents", parents)

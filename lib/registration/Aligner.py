@@ -234,7 +234,7 @@ class Aligner:
             head_point_cloud = copy.deepcopy(pcd)
 
             # scales the head down since they are a bit bigger
-            head_mesh = head_mesh.scale(1.075, head_mesh.get_center())
+            head_mesh = head_mesh.scale(0.975, head_mesh.get_center())
 
             # create point cloud out of head_mesh
             head_mesh_point_cloud = head_mesh.sample_points_uniformly(

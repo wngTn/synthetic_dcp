@@ -6,48 +6,30 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import imageio
 from tqdm import tqdm
+import open3d as o3d
 
 sys.path.insert(0, str(Path().resolve() / "lib"))
 from smplmodel.body_param import load_model
+from utils.util import unpack_poses
+from data.data_synthetic import Synthetic_Data, SMPLAugmentation
 
 PATH = Path("data") / "smpl_training_poses.pkl"
 
-def unpack_poses():
-	poses = []
-	with PATH.open('rb') as fp:
-		data = pickle.load(fp)
-	for pose in data:
-		for j in range(len(pose['pose_params'])):
-			pose_data = {
-				'pose_params' : pose['pose_params'][j],
-				'shape_params' : pose['shape_params'][j]
-			}
-			poses.append(pose_data)
-
-	return poses
-
-
 def create_gif(num_poses=10):
-
-	total_poses = unpack_poses()
-	print(len(total_poses))
-	smpl_poses = np.random.choice(total_poses, num_poses)
-	poses = np.stack([np.array(p['pose_params']) for p in smpl_poses])
-	shapes = np.stack([np.array(p['shape_params']) for p in smpl_poses])
-	Rh = np.repeat([[1, -1, -1]], num_poses, axis=0)
-	# [-1.37403257 -1.90787402 -3.6412792  -0.56796243 -0.34575749 -1.35396896 -4.74416233 -1.16888448 -2.11272129 -3.70337418]
-	# makes smpl model more thick
-	# shapes[23] = np.ones(10) * -1.5
+	# the gif doesnt show the augmented smpl model as it is only a point cloud and the functions here
+	# only use the faces of the orignal smpl model -> result doesn't contain vertices of accessoires
+ 
+	augmentation = SMPLAugmentation(hat_probability = 1, mask_probability = 1, glasses_probability = 1)
+	dataset = Synthetic_Data(num_poses)
 
 	body_model = load_model(gender="neutral", model_path=Path("data").joinpath("smpl_models"))
 
-	# gets the vertices
-	vertices = body_model(poses, shapes, Rh=Rh, Th=None, return_verts=True, return_tensor=False)
 	images = []
 	for i in tqdm(range(num_poses), desc="Iterating through poses"):
+		vertices = augmentation(dataset[i][0])
 		model_info = {
-			'verts': vertices[i],
-			'joints': body_model.J_regressor.cpu().numpy() @ vertices[i]
+			'verts': vertices,
+			'joints': body_model.J_regressor.cpu().numpy() @ dataset[i][0]
 		}
 		fig = draw_model(model_info,
 							model_faces=body_model.faces,
@@ -57,7 +39,7 @@ def create_gif(num_poses=10):
 		fig.canvas.draw()
 		fig.tight_layout(pad=0)
 		img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-		img = img.reshape(1000, 1000, 3)
+		img = img.reshape(500, 500, 3)
 		plt.close()
 
 		images.append(img)

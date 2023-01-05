@@ -16,14 +16,80 @@ import time
 from scipy.spatial.transform import Rotation as R
 from utils.indices import HEAD
 import copy
+import pickle
 
 # Part of the code is referred from: https://github.com/ClementPinard/SfmLearner-Pytorch/blob/master/inverse_warp.py
 
+
+def unpack_poses(path):
+	poses = []
+	with path.open('rb') as fp:
+		data = pickle.load(fp)
+	for pose in data:
+		for j in range(len(pose['pose_params'])):
+			pose_data = {
+				'pose_params' : pose['pose_params'][j],
+				'shape_params' : pose['shape_params'][j]
+			}
+			poses.append(pose_data)
+
+	return poses
 
 def get_rotation_matrix(vec2, vec1):
     r = R.align_vectors(vec2, vec1)
     return r[0].as_matrix()
 
+def add_gear_to_smpl_pcd(pcd,
+                          extract_head=True,
+                          hat=True,
+                          mask=True,
+                          glasses=False):
+
+    # index of vertices on the smpl model
+    ear_left = pcd[6887]
+    ear_right = pcd[547] 
+    mid = 0.5 * (ear_left + ear_right)
+    nose = pcd[332]
+    top_of_head_vec = pcd[412] * 1
+
+    # extract a new coordinate system fitting the head position
+    # compute a rotation matrix for change of basis (standard basis to "head-basis")
+    R = get_rotation_matrix(
+        np.array([mid - ear_left, top_of_head_vec - mid, nose - mid]).reshape(-1, 3), np.eye(3))
+
+    # Extracts the head
+    if extract_head:
+        mask = np.arange(len(pcd))
+        mask = mask[mask in set(HEAD)]
+        pcd = pcd[mask]
+
+    if mask:
+        mask_pcd = o3d.io.read_triangle_mesh(str("./data/wearables/medical_mask.obj"))
+        mask_pcd.rotate(R, center=(0, 0, 0))
+        mask_pcd.translate(nose)
+        mask_pcd.scale(1.10, center=mask_pcd.get_center())
+
+        pcd = np.concatenate([pcd, np.asarray(mask_pcd.vertices)], axis=0)
+
+    if hat:
+        hat_pcd = o3d.io.read_triangle_mesh(str("./data/wearables/hat.ply"))
+        hat_pcd.scale(2.75, center=hat_pcd.get_center())
+        hat_pcd.rotate(R, center=(0, 0, 0))
+        hat_pcd.translate(mid)
+
+        pcd = np.concatenate([pcd, np.asarray(hat_pcd.vertices)], axis=0)
+        
+
+    if glasses:
+        glassed_pcd = o3d.io.read_triangle_mesh(str("./data/wearables/glasses.obj"))
+
+        glassed_pcd.scale(1, center=glassed_pcd.get_center())
+        glassed_pcd.rotate(R, center=(0, 0, 0))
+        glassed_pcd.translate(nose)
+
+        pcd = np.concatenate([pcd, np.asarray(glassed_pcd.vertices)], axis=0)
+
+    return pcd
 
 def add_gear_to_smpl_mesh(mesh,
                           extract_head=True,

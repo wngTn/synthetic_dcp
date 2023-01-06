@@ -9,9 +9,9 @@ sys.path.insert(0, str(pathlib.Path().resolve() / "lib"))
 from utils.util import load_mesh, add_gear_to_smpl_mesh
 
 
-FRAME_ID = 1020
+FRAME_ID = 1850
 # Whether to only show the head
-EXTRACT_HEAD = True
+EXTRACT_HEAD = False
 EXTRACT_JOINTS = False
 
 
@@ -35,31 +35,20 @@ def main():
 
     for i, mesh in enumerate(meshes):
     
-        meshes_i = add_gear_to_smpl_mesh(mesh, EXTRACT_HEAD, get_individual = True, glasses = True)
+        meshes_i = add_gear_to_smpl_mesh(mesh,
+                                        EXTRACT_HEAD,
+                                        remove_inner = True,
+                                        hat=True,
+                                        mask=True,
+                                        glasses=True)
         
         
         
-        vis.add_geometry(f"mesh_{i}", meshes_i[0])
-        
-        pcd_mask = o3d.geometry.PointCloud()
-        pcd_mask.points = o3d.utility.Vector3dVector(meshes_i[1].vertices)
-        vis.add_geometry(f"mask_{i}", pcd_mask)
-    
-
-        pcd_hat = o3d.geometry.PointCloud()
-        pcd_hat.points = o3d.utility.Vector3dVector(meshes_i[2].vertices)
-        vis.add_geometry(f"hat_{i}", pcd_hat)
-
-        pcd_glasses = o3d.geometry.PointCloud()
-        pcd_glasses.points = o3d.utility.Vector3dVector(meshes_i[3].vertices)
-        vis.add_geometry(f"glasses_{i}", pcd_glasses)
-
+        vis.add_geometry(f"mesh_{i}", meshes_i)
 
         merged_pcd = o3d.geometry.PointCloud()
-        merged_pcd.points = o3d.utility.Vector3dVector(meshes_i[4].vertices)
+        merged_pcd.points = o3d.utility.Vector3dVector(meshes_i.vertices)
         
-        
-        vis.add_geometry(f"merged_mesh{i}", meshes_i[4])
         vis.add_geometry(f"merged_pcd{i}", merged_pcd)
 
 

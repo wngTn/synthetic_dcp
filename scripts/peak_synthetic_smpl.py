@@ -26,9 +26,8 @@ def create_gif(num_poses=10):
 
 	images = []
 	for i in tqdm(range(num_poses), desc="Iterating through poses"):
-		vertices = augmentation(dataset[i][0])
 		model_info = {
-			'verts': vertices,
+			'verts': dataset[i][0],
 			'joints': body_model.J_regressor.cpu().numpy() @ dataset[i][0]
 		}
 		fig = draw_model(model_info,

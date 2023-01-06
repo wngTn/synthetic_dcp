@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 import time
 from scipy.spatial.transform import Rotation as R
-from utils.indices import HEAD
+from utils.indices import HEAD, HEAD_HIDDEN
 import copy
 import pickle
 
@@ -39,64 +39,13 @@ def get_rotation_matrix(vec2, vec1):
     r = R.align_vectors(vec2, vec1)
     return r[0].as_matrix()
 
-def add_gear_to_smpl_pcd(pcd,
-                          extract_head=True,
-                          hat=True,
-                          mask=True,
-                          glasses=False):
-
-    # index of vertices on the smpl model
-    ear_left = pcd[6887]
-    ear_right = pcd[547] 
-    mid = 0.5 * (ear_left + ear_right)
-    nose = pcd[332]
-    top_of_head_vec = pcd[412] * 1
-
-    # extract a new coordinate system fitting the head position
-    # compute a rotation matrix for change of basis (standard basis to "head-basis")
-    R = get_rotation_matrix(
-        np.array([mid - ear_left, top_of_head_vec - mid, nose - mid]).reshape(-1, 3), np.eye(3))
-
-    # Extracts the head
-    if extract_head:
-        mask = np.arange(len(pcd))
-        mask = mask[mask in set(HEAD)]
-        pcd = pcd[mask]
-
-    if mask:
-        mask_pcd = o3d.io.read_triangle_mesh(str("./data/wearables/medical_mask.obj"))
-        mask_pcd.rotate(R, center=(0, 0, 0))
-        mask_pcd.translate(nose)
-        mask_pcd.scale(1.10, center=mask_pcd.get_center())
-
-        pcd = np.concatenate([pcd, np.asarray(mask_pcd.vertices)], axis=0)
-
-    if hat:
-        hat_pcd = o3d.io.read_triangle_mesh(str("./data/wearables/hat.ply"))
-        hat_pcd.scale(2.75, center=hat_pcd.get_center())
-        hat_pcd.rotate(R, center=(0, 0, 0))
-        hat_pcd.translate(mid)
-
-        pcd = np.concatenate([pcd, np.asarray(hat_pcd.vertices)], axis=0)
-        
-
-    if glasses:
-        glassed_pcd = o3d.io.read_triangle_mesh(str("./data/wearables/glasses.obj"))
-
-        glassed_pcd.scale(1, center=glassed_pcd.get_center())
-        glassed_pcd.rotate(R, center=(0, 0, 0))
-        glassed_pcd.translate(nose)
-
-        pcd = np.concatenate([pcd, np.asarray(glassed_pcd.vertices)], axis=0)
-
-    return pcd
-
 def add_gear_to_smpl_mesh(mesh,
                           extract_head=True,
-                          get_individual=False,
+                          remove_inner=True,
                           hat=True,
                           mask=True,
-                          glasses=False):
+                          glasses=False
+                          ):
     meshes = [mesh]
 
     # index of vertices on the smpl mesh
@@ -111,11 +60,20 @@ def add_gear_to_smpl_mesh(mesh,
     # compute a rotation matrix for change of basis (standard basis to "head-basis")
     R = get_rotation_matrix(
         np.array([mid - ear_left, top_of_head_vec - mid, nose - mid]).reshape(-1, 3), np.eye(3))
-
+    
+    o3d.io.write_triangle_mesh("smpl.obj", mesh)
+    
+    removal_set = set()
+    
     # Extracts the head
     if extract_head:
-        mesh.remove_vertices_by_index(list(set(range(6890)) - set(HEAD)))
-
+        removal_set = set(range(6890)) - set(HEAD)
+        
+    if remove_inner:
+        removal_set = removal_set.union(set(HEAD_HIDDEN))
+    
+    mesh.remove_vertices_by_index(list(removal_set))
+        
     if mask:
         mask_mesh = o3d.io.read_triangle_mesh(str("./data/wearables/medical_mask.obj"))
         mask_mesh.rotate(R, center=(0, 0, 0))
@@ -144,10 +102,6 @@ def add_gear_to_smpl_mesh(mesh,
     merged = copy.deepcopy(mesh)
     for wearable_mesh in meshes:
         merged += wearable_mesh
-
-    if get_individual:
-        meshes.append(merged)
-        return meshes
 
     return merged
 

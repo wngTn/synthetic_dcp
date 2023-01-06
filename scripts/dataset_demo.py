@@ -5,13 +5,13 @@ import open3d as o3d
 from copy import deepcopy
 
 sys.path.insert(0, str(Path().resolve() / "lib"))
-from data.data_synthetic import Synthetic_Data, SMPLAugmentation
+from data.data_synthetic import SyntheticData, SMPLAugmentation
 
 PATH = Path("data") / "smpl_training_poses.pkl"
 
 
 augmentation = SMPLAugmentation(hat_probability = 1, mask_probability = 1, glasses_probability = 1)
-dataset = Synthetic_Data(100, 5024, augmentation)
+dataset = SyntheticData(100, 5024, augmentation)
 
 pcd = o3d.geometry.PointCloud()
 

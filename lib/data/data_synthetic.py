@@ -115,7 +115,6 @@ class SyntheticData(Dataset):
         # crop mesh with bounding box
         augmented_mesh = self.crop_mesh(augmented_mesh, original_head_mesh)
         
-        
         # uniformly downsample the meshes so we can have the dimension the rigid regestration requires
         augmented_pcd = augmented_mesh.sample_points_uniformly(number_of_points=self.num_output_points)
         translated_head_pcd = translated_head_pcd.sample_points_uniformly(number_of_points=self.num_output_points)

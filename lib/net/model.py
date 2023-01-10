@@ -42,8 +42,11 @@ def nearest_neighbor(src, dst):
 
 
 def knn(x, k):
+    # torch.Size([32, 1024, 1024)
     inner = -2 * torch.matmul(x.transpose(2, 1).contiguous(), x)
+    # torch.Size([32, 1, 1024])
     xx = torch.sum(x**2, dim=1, keepdim=True)
+    # torch.Size([32, 1024, 1024])
     pairwise_distance = -xx - inner - xx.transpose(2, 1).contiguous()
 
     idx = pairwise_distance.topk(k=k, dim=-1)[1]  # (batch_size, num_points, k)

@@ -41,7 +41,11 @@ class SmplSynthetic(Dataset):
         self.num_output_points = num_output_points
         self.factor = 4
         self.body_model = load_model(gender="neutral", model_path=Path("data").joinpath("smpl_models"))
-        self.len = 2000 if split == 'train' else 200
+        
+        # choose dims of dataset
+        self.test_len = 100
+        self.len = 1000 if split == 'train' else self.test_len
+        self.split = split
 
     def gaussian_noise(self, pcd, variance):
         noise = 1 + np.random.normal(0, variance, self.num_output_points * 3).reshape((-1, 3))
@@ -68,9 +72,9 @@ class SmplSynthetic(Dataset):
         head_mesh.remove_vertices_by_index(list(set(range(6890)) - set(HEAD)))
 
         # get a random rotation matrix
-        anglex = np.random.uniform() * np.pi / self.factor
-        angley = np.random.uniform() * np.pi / self.factor
-        anglez = np.random.uniform() * np.pi / self.factor
+        anglex = 0.5 * np.pi / self.factor #np.random.uniform() * np.pi / self.factor
+        angley = 0.5 * np.pi / self.factor #np.random.uniform() * np.pi / self.factor
+        anglez = 0.5 * np.pi / self.factor #np.random.uniform() * np.pi / self.factor
 
         cosx = np.cos(anglex)
         cosy = np.cos(angley)
@@ -88,6 +92,9 @@ class SmplSynthetic(Dataset):
             np.random.uniform(-0.15, 0.15),
             np.random.uniform(-0.15, 0.15),
         ])
+        
+        translation_ab = np.array([0.15, 0.15, -0.15])
+        
         translation_ba = -R_ba.dot(translation_ab)
 
         euler_ab = np.asarray([anglez, angley, anglex])
@@ -106,8 +113,11 @@ class SmplSynthetic(Dataset):
         # we shouldn't randomize the dataloading here
         # the torch dataloader introduces shuffeling on its own already
         # e.g. len == 200 now actually means only choosing randomly from the first 200 and not 200 from all 90.000 poses
-
-        smpl_pose = self.smpl_poses[item]
+        # this code rn is ugly but makes sure the test data is unseen
+        if self.split == 'train':
+            smpl_pose = self.smpl_poses[item + self.test_len]
+        else:
+            smpl_pose = self.smpl_poses[item + self.test_len]
 
         poses = np.array([smpl_pose['pose_params']])
         shapes = np.array([smpl_pose['shape_params']])

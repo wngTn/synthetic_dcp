@@ -102,8 +102,11 @@ def train_one_epoch(args, net, train_loader, opt, boardio, epoch):
         if it % 9 == 0:
             fig = visualize_transformation(src.cpu().numpy(),
                                            target.cpu().numpy(),
+                                           rotation_ab.cpu().numpy(),
+                                           translation_ab.cpu().numpy(),
                                            rotation_ab_pred.detach().cpu().numpy(),
-                                           translation_ab_pred.detach().cpu().numpy())
+                                           translation_ab_pred.detach().cpu().numpy(),
+                                           )
             boardio.add_figure('predictions', fig, global_step=(epoch + 1) * (it + 1))
 
     rotations_ab = np.concatenate(rotations_ab, axis=0)

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class RigidRegistration:
     def __init__(self, **kwargs):
         for key in kwargs:

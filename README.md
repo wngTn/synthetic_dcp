@@ -10,6 +10,24 @@ We did not create them, do not prosecute us.
 
 Download the trial data under this location: `./data/trial`
 
+## Debugging ##
+
+Use debug.py and the key maps are:
+- A for advance
+- S for going bac
+- Q for the next person
+- D for closing the whole debugger
+
+## Synthetic SMPL Poses ##
+
+The parameters for synthetically created SMPL poses can be found [here](https://nextcloud.in.tum.de/index.php/s/H9W8rAAoHiXHjfz) (128MB).
+
+It has over 90k different poses sampled from the HumanAct12 dataset.
+
+![SMPL POses](assets/smpl_poses.gif)
+This GIF visualizes 100 poses; it was created with `scripts/peak_synthetic_smpl.py`
+
+
 ## File Structure ##
 
 ```
@@ -19,6 +37,8 @@ Download the trial data under this location: `./data/trial`
 │   ├── mesh_files
 │	├── smpl_models 
 │   └── trial
+├── scripts
+│   ├── ...
 ├── data.py
 ├── demo
 ├── main.py

@@ -16,23 +16,29 @@ class ICP(RigidRegistration):
         super().__init__(**kwargs)
 
     def run(self, source_pcd, target_pcd, trans_init=np.eye(4)):
-        if (len(target_pcd.points) < 100):
+        if len(target_pcd.points) < 100:
             logger.debug(
                 f"The target point cloud has {len(target_pcd.points)} many points -- skipping ICP"
             )
             return self.trans_init
 
         reg_p2p = o3d.pipelines.registration.registration_icp(
-            source_pcd, target_pcd, self.threshold, trans_init,
+            source_pcd,
+            target_pcd,
+            self.threshold,
+            trans_init,
             o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-            o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=self.max_iter))
+            o3d.pipelines.registration.ICPConvergenceCriteria(
+                max_iteration=self.max_iter
+            ),
+        )
 
         logger.debug(f"Done ICP iteration with {self.max_iter} iterations.")
 
         return reg_p2p.transformation
 
     def run_debug(self, source_pcd, target_pcd, trans_init=np.eye(4)):
-        if (len(target_pcd.points) < 100):
+        if len(target_pcd.points) < 100:
             logger.debug(
                 f"The target point cloud has {len(target_pcd.points)} many points -- skipping ICP"
             )
@@ -44,7 +50,8 @@ class ICP(RigidRegistration):
             max_correspondence_distance=self.threshold,
             init=trans_init,
             estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-            criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=1))
+            criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=1),
+        )
 
         logger.debug("Did one iteration")
         return reg_p2p.transformation

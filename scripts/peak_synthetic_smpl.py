@@ -11,7 +11,7 @@ import open3d as o3d
 sys.path.insert(0, str(Path().resolve() / "lib"))
 from smplmodel.body_param import load_model
 from utils.util import unpack_poses
-from data.data_synthetic import SyntheticData, SMPLAugmentation
+from data.data_synthetic import SmplSynthetic, SMPLAugmentation
 
 PATH = Path("data") / "smpl_training_poses.pkl"
 
@@ -20,7 +20,7 @@ def create_gif(num_poses=10):
 	# only use the faces of the orignal smpl model -> result doesn't contain vertices of accessoires
  
 	augmentation = SMPLAugmentation(hat_probability = 1, mask_probability = 1, glasses_probability = 1)
-	dataset = SyntheticData(num_poses)
+	dataset = SmplSynthetic(num_poses)
 
 	body_model = load_model(gender="neutral", model_path=Path("data").joinpath("smpl_models"))
 

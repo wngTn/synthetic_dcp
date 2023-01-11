@@ -6,6 +6,7 @@ from scipy.spatial.transform import Rotation as R
 import open3d as o3d
 from copy import deepcopy
 import matplotlib.pyplot as plt
+import time
 
 from utils.util import unpack_poses, add_gear_to_smpl_mesh
 from utils.indices import HEAD
@@ -27,7 +28,7 @@ class SMPLAugmentation():
         add_hat = self.hat_probability > random.random()
         add_mask = self.mask_probability > random.random()
         add_glasses = self.glasses_probability > random.random()
-
+    
         augmented_mesh = add_gear_to_smpl_mesh(mesh, False, True, add_hat, add_mask, add_glasses)
         return augmented_mesh
 
@@ -102,11 +103,17 @@ class SmplSynthetic(Dataset):
 
     def __getitem__(self, item):
 
-        smpl_pose = np.random.choice(self.smpl_poses)
+        # we shouldn't randomize the dataloading here
+        # the torch dataloader introduces shuffeling on its own already
+        # e.g. len == 200 now actually means only choosing randomly from the first 200 and not 200 from all 90.000 poses
+
+        smpl_pose = self.smpl_poses[item]
+
         poses = np.array([smpl_pose['pose_params']])
         shapes = np.array([smpl_pose['shape_params']])
         Rh = np.array([[1, -1, -1]])
         vertices = self.body_model(poses, shapes, Rh=Rh, Th=None, return_verts=True, return_tensor=False)[0]
+
         # create the smpl mesh
         smpl_mesh = o3d.geometry.TriangleMesh()
         smpl_mesh.vertices = o3d.utility.Vector3dVector(vertices)
@@ -132,14 +139,13 @@ class SmplSynthetic(Dataset):
         augmented_mesh = self.crop_mesh(augmented_mesh, transformed_head_mesh)
 
         # uniformly downsample the meshes so we can have the dimension the rigid regestration requires
-        augmented_pcd = augmented_mesh.sample_points_uniformly(number_of_points=self.num_output_points * 4)
-        augmented_pcd = augmented_mesh.sample_points_poisson_disk(number_of_points=self.num_output_points,
-                                                                  pcl=augmented_pcd)
+        augmented_pcd = augmented_mesh.sample_points_uniformly(number_of_points=self.num_output_points)
+        # augmented_pcd = augmented_mesh.sample_points_poisson_disk(number_of_points=self.num_output_points,
+        #                                                           pcl=augmented_pcd)
 
-        transformed_head_pcd = transformed_head_mesh.sample_points_uniformly(number_of_points=self.num_output_points *
-                                                                             4)
-        transformed_head_pcd = transformed_head_mesh.sample_points_poisson_disk(number_of_points=self.num_output_points,
-                                                                                pcl=transformed_head_pcd)
+        transformed_head_pcd = transformed_head_mesh.sample_points_uniformly(number_of_points=self.num_output_points)
+        # transformed_head_pcd = transformed_head_mesh.sample_points_poisson_disk(number_of_points=self.num_output_points,
+        #                                                                         pcl=transformed_head_pcd)
 
         # add some noise to more closely match natural noise of messurements
         augmented_pcd = self.gaussian_noise(augmented_pcd, .01)

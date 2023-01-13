@@ -6,7 +6,6 @@ from scipy.spatial.transform import Rotation as R
 import open3d as o3d
 from copy import deepcopy
 import matplotlib.pyplot as plt
-import time
 
 from utils.util import unpack_poses, add_gear_to_smpl_mesh
 from utils.indices import HEAD
@@ -43,8 +42,8 @@ class SmplSynthetic(Dataset):
         self.body_model = load_model(gender="neutral", model_path=Path("data").joinpath("smpl_models"))
         
         # choose dims of dataset
-        self.test_len = 100
-        self.len = 1000 if split == 'train' else self.test_len
+        self.test_len = 250
+        self.len = 2500 if split == 'train' else self.test_len
         self.split = split
 
     def gaussian_noise(self, pcd, variance):
@@ -55,10 +54,10 @@ class SmplSynthetic(Dataset):
     def crop_mesh(self, mesh_full, mesh_head):
         # crop the point cloud
         bbox = o3d.geometry.AxisAlignedBoundingBox.create_from_points(mesh_head.vertices)
-        bbox = bbox.scale(1.25, bbox.get_center())
+        bbox = bbox.scale(1.05, bbox.get_center())
 
-        bbox.max_bound = bbox.max_bound + np.array([0.25, 0.25, 0.25])
-        bbox.min_bound = bbox.min_bound - np.array([0.25, 0.25, 0.25])
+        bbox.max_bound = bbox.max_bound + np.array([0.15, 0.15, 0.15])
+        bbox.min_bound = bbox.min_bound - np.array([0.15, 0.15, 0.15])
 
         return mesh_full.crop(bbox)
 
@@ -72,10 +71,14 @@ class SmplSynthetic(Dataset):
         head_mesh.remove_vertices_by_index(list(set(range(6890)) - set(HEAD)))
 
         # get a random rotation matrix
-        anglex = 0.5 * np.pi / self.factor #np.random.uniform() * np.pi / self.factor
-        angley = 0.5 * np.pi / self.factor #np.random.uniform() * np.pi / self.factor
-        anglez = 0.5 * np.pi / self.factor #np.random.uniform() * np.pi / self.factor
-
+        anglex = np.random.uniform() * np.pi / self.factor
+        angley = np.random.uniform() * np.pi / self.factor
+        anglez = np.random.uniform() * np.pi / self.factor
+        
+        # anglex = 0.5 * np.pi / self.factor 
+        # angley = 0.5 * np.pi / self.factor 
+        # anglez = 0.5 * np.pi / self.factor
+        
         cosx = np.cos(anglex)
         cosy = np.cos(angley)
         cosz = np.cos(anglez)
@@ -93,7 +96,7 @@ class SmplSynthetic(Dataset):
             np.random.uniform(-0.15, 0.15),
         ])
         
-        translation_ab = np.array([0.15, 0.15, -0.15])
+        # translation_ab = np.array([0.15, 0.15, -0.15])
         
         translation_ba = -R_ba.dot(translation_ab)
 
@@ -117,7 +120,7 @@ class SmplSynthetic(Dataset):
         if self.split == 'train':
             smpl_pose = self.smpl_poses[item + self.test_len]
         else:
-            smpl_pose = self.smpl_poses[item + self.test_len]
+            smpl_pose = self.smpl_poses[item]
 
         poses = np.array([smpl_pose['pose_params']])
         shapes = np.array([smpl_pose['shape_params']])

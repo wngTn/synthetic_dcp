@@ -6,6 +6,7 @@ from scipy.spatial.transform import Rotation as R
 import open3d as o3d
 from copy import deepcopy
 import matplotlib.pyplot as plt
+import time
 
 from utils.util import unpack_poses, add_gear_to_smpl_mesh
 from utils.indices import HEAD
@@ -27,7 +28,7 @@ class SMPLAugmentation():
         add_hat = self.hat_probability > random.random()
         add_mask = self.mask_probability > random.random()
         add_glasses = self.glasses_probability > random.random()
-
+    
         augmented_mesh = add_gear_to_smpl_mesh(mesh, False, True, add_hat, add_mask, add_glasses)
         return augmented_mesh
 
@@ -40,7 +41,11 @@ class SmplSynthetic(Dataset):
         self.num_output_points = num_output_points
         self.factor = 4
         self.body_model = load_model(gender="neutral", model_path=Path("data").joinpath("smpl_models"))
-        self.len = 2000 if split == 'train' else 200
+        
+        # choose dims of dataset
+        self.test_len = 100
+        self.len = 1000 if split == 'train' else self.test_len
+        self.split = split
 
     def gaussian_noise(self, pcd, variance):
         noise = 1 + np.random.normal(0, variance, self.num_output_points * 3).reshape((-1, 3))
@@ -67,9 +72,9 @@ class SmplSynthetic(Dataset):
         head_mesh.remove_vertices_by_index(list(set(range(6890)) - set(HEAD)))
 
         # get a random rotation matrix
-        anglex = np.random.uniform() * np.pi / self.factor
-        angley = np.random.uniform() * np.pi / self.factor
-        anglez = np.random.uniform() * np.pi / self.factor
+        anglex = 0.5 * np.pi / self.factor #np.random.uniform() * np.pi / self.factor
+        angley = 0.5 * np.pi / self.factor #np.random.uniform() * np.pi / self.factor
+        anglez = 0.5 * np.pi / self.factor #np.random.uniform() * np.pi / self.factor
 
         cosx = np.cos(anglex)
         cosy = np.cos(angley)
@@ -87,6 +92,9 @@ class SmplSynthetic(Dataset):
             np.random.uniform(-0.15, 0.15),
             np.random.uniform(-0.15, 0.15),
         ])
+        
+        translation_ab = np.array([0.15, 0.15, -0.15])
+        
         translation_ba = -R_ba.dot(translation_ab)
 
         euler_ab = np.asarray([anglez, angley, anglex])
@@ -101,6 +109,34 @@ class SmplSynthetic(Dataset):
         return head_mesh, R_ab, translation_ab, R_ba, translation_ba, euler_ab, euler_ba
 
     def __getitem__(self, item):
+
+        # we shouldn't randomize the dataloading here
+        # the torch dataloader introduces shuffeling on its own already
+        # e.g. len == 200 now actually means only choosing randomly from the first 200 and not 200 from all 90.000 poses
+        # this code rn is ugly but makes sure the test data is unseen
+        if self.split == 'train':
+            smpl_pose = self.smpl_poses[item + self.test_len]
+        else:
+            smpl_pose = self.smpl_poses[item + self.test_len]
+
+        poses = np.array([smpl_pose['pose_params']])
+        shapes = np.array([smpl_pose['shape_params']])
+        Rh = np.array([[1, -1, -1]])
+        vertices = self.body_model(poses, shapes, Rh=Rh, Th=None, return_verts=True, return_tensor=False)[0]
+
+        # we shouldn't randomize the dataloading here
+        # the torch dataloader introduces shuffeling on its own already
+        # e.g. len == 200 now actually means only choosing randomly from the first 200 and not 200 from all 90.000 poses
+        # this code rn is ugly but makes sure the test data is unseen
+        if self.split == 'train':
+            smpl_pose = self.smpl_poses[item + self.test_len]
+        else:
+            smpl_pose = self.smpl_poses[item + self.test_len]
+
+        poses = np.array([smpl_pose['pose_params']])
+        shapes = np.array([smpl_pose['shape_params']])
+        Rh = np.array([[1, -1, -1]])
+        vertices = self.body_model(poses, shapes, Rh=Rh, Th=None, return_verts=True, return_tensor=False)[0]
 
         smpl_pose = np.random.choice(self.smpl_poses)
         poses = np.array([smpl_pose['pose_params']])
@@ -132,14 +168,13 @@ class SmplSynthetic(Dataset):
         augmented_mesh = self.crop_mesh(augmented_mesh, transformed_head_mesh)
 
         # uniformly downsample the meshes so we can have the dimension the rigid regestration requires
-        augmented_pcd = augmented_mesh.sample_points_uniformly(number_of_points=self.num_output_points * 4)
-        augmented_pcd = augmented_mesh.sample_points_poisson_disk(number_of_points=self.num_output_points,
-                                                                  pcl=augmented_pcd)
+        augmented_pcd = augmented_mesh.sample_points_uniformly(number_of_points=self.num_output_points)
+        # augmented_pcd = augmented_mesh.sample_points_poisson_disk(number_of_points=self.num_output_points,
+        #                                                           pcl=augmented_pcd)
 
-        transformed_head_pcd = transformed_head_mesh.sample_points_uniformly(number_of_points=self.num_output_points *
-                                                                             4)
-        transformed_head_pcd = transformed_head_mesh.sample_points_poisson_disk(number_of_points=self.num_output_points,
-                                                                                pcl=transformed_head_pcd)
+        transformed_head_pcd = transformed_head_mesh.sample_points_uniformly(number_of_points=self.num_output_points)
+        # transformed_head_pcd = transformed_head_mesh.sample_points_poisson_disk(number_of_points=self.num_output_points,
+        #                                                                         pcl=transformed_head_pcd)
 
         # add some noise to more closely match natural noise of messurements
         augmented_pcd = self.gaussian_noise(augmented_pcd, .01)

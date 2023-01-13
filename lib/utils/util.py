@@ -20,7 +20,6 @@ import pickle
 
 # Part of the code is referred from: https://github.com/ClementPinard/SfmLearner-Pytorch/blob/master/inverse_warp.py
 
-
 def unpack_poses(path):
 	poses = []
 	with path.open('rb') as fp:
@@ -35,14 +34,29 @@ def unpack_poses(path):
 
 	return poses
 
-def get_rotation_matrix(vec2, vec1):
-    r = R.align_vectors(vec2, vec1)
+def get_rotation_matrix_for_basis_vecs(basis_vecs):
+    basis_matrix = np.array(basis_vecs).reshape(-1, 3)
+    r = R.align_vectors(basis_matrix, np.eye(3))
     return r[0].as_matrix()
 
 
+# keep in memory for efficiency
 MASK_MESH = o3d.io.read_triangle_mesh(str("./data/wearables/medical_mask.obj"))
 HAT_MESH = o3d.io.read_triangle_mesh(str("./data/wearables/hat.ply"))
 GLASSES_MESH = o3d.io.read_triangle_mesh(str("./data/wearables/glasses.obj"))
+
+# precompute for efficiency
+REMOVAL_SET_HEAD = set(range(6890)) - set(HEAD)
+REMOVAL_SET_HIDDEN = set(HEAD_HIDDEN)
+REMOVAL_SET_HEAD_AND_HIDDEN = REMOVAL_SET_HEAD.union(REMOVAL_SET_HIDDEN)
+
+
+def rotate_and_translate(mesh, translate, rotation):
+    mesh_copy = copy.deepcopy(mesh)
+    mesh_copy.rotate(rotation, center=(0, 0, 0))
+    mesh_copy.translate(translate)
+    return mesh_copy
+
 
 def add_gear_to_smpl_mesh(mesh,
                           extract_head=True,
@@ -51,8 +65,7 @@ def add_gear_to_smpl_mesh(mesh,
                           mask=True,
                           glasses=False
                           ):
-    meshes = [mesh]
-
+    
     # index of vertices on the smpl mesh
     # multiply by one to copy them (removing the head changes the referenced values unfortunately)
     ear_left = mesh.vertices[6887] * 1
@@ -63,43 +76,27 @@ def add_gear_to_smpl_mesh(mesh,
 
     # extract a new coordinate system fitting the head position
     # compute a rotation matrix for change of basis (standard basis to "head-basis")
-    R = get_rotation_matrix(
-        np.array([mid - ear_left, top_of_head_vec - mid, nose - mid]).reshape(-1, 3), np.eye(3))
-        
+    R = get_rotation_matrix_for_basis_vecs([mid - ear_left, top_of_head_vec - mid, nose - mid])
+    
+    # remove unwanted vertices from smpl mesh
     removal_set = set()
-    
-    # Extracts the head
-    if extract_head:
-        removal_set = set(range(6890)) - set(HEAD)
-        
-    if remove_inner:
-        removal_set = removal_set.union(set(HEAD_HIDDEN))
-    
-    mesh.remove_vertices_by_index(list(removal_set))
-        
-    if mask:
-        mask_mesh = copy.deepcopy(MASK_MESH)
-        mask_mesh.rotate(R, center=(0, 0, 0))
-        mask_mesh.translate(nose)
+    if extract_head and remove_inner:
+        removal_set = REMOVAL_SET_HEAD_AND_HIDDEN
+    elif extract_head:
+        removal_set = REMOVAL_SET_HEAD
+    elif remove_inner:
+        removal_set = REMOVAL_SET_HIDDEN
 
-        meshes.append(mask_mesh)
+    mesh.remove_vertices_by_index(list(removal_set))
+
+    if mask:
+        mesh += rotate_and_translate(MASK_MESH, nose, R)
 
     if hat:
-        hat_mesh = copy.deepcopy(HAT_MESH)
-        hat_mesh.rotate(R, center=(0, 0, 0))
-        hat_mesh.translate(mid)
-
-        meshes.append(hat_mesh)
+        mesh += rotate_and_translate(HAT_MESH, mid, R)
 
     if glasses:
-        glasses_mesh = copy.deepcopy(GLASSES_MESH)
-        glasses_mesh.rotate(R, center=(0, 0, 0))
-        glasses_mesh.translate(nose)
-
-        meshes.append(glasses_mesh)
-
-    for wearable_mesh in meshes:
-        mesh += wearable_mesh
+        mesh += rotate_and_translate(GLASSES_MESH, nose, R)
 
     return mesh
 

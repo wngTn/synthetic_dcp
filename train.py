@@ -10,7 +10,7 @@ from torch.optim.lr_scheduler import MultiStepLR
 
 import __init_paths__
 from lib.data.dataloading import ModelNet40
-from core.function import train_one_epoch, test_one_epoch
+from core.function import one_epoch
 from data.data_synthetic import SmplSynthetic, SMPLAugmentation
 from lib.net.model import DCP
 from lib.utils.util import transform_point_cloud, npmat2euler
@@ -69,10 +69,6 @@ def train(args, net, train_loader, test_loader, boardio, textio):
     scheduler = MultiStepLR(opt, milestones=[75, 150, 200], gamma=0.1)
 
     best_test_loss = np.inf
-    best_test_cycle_loss = np.inf
-    best_test_mse_ab = np.inf
-    best_test_rmse_ab = np.inf
-    best_test_mae_ab = np.inf
 
     best_test_r_mse_ab = np.inf
     best_test_r_rmse_ab = np.inf
@@ -96,10 +92,6 @@ def train(args, net, train_loader, test_loader, boardio, textio):
         (
             train_loss,
             train_cycle_loss,
-            train_mse_ab,
-            train_mae_ab,
-            train_mse_ba,
-            train_mae_ba,
             train_rotations_ab,
             train_translations_ab,
             train_rotations_ab_pred,
@@ -110,15 +102,11 @@ def train(args, net, train_loader, test_loader, boardio, textio):
             train_translations_ba_pred,
             train_eulers_ab,
             train_eulers_ba,
-        ) = train_one_epoch(args, net, train_loader, opt, boardio, epoch)
+        ) = one_epoch(args, net, train_loader, opt, boardio, epoch, is_train = True)
         scheduler.step()
         (
             test_loss,
             test_cycle_loss,
-            test_mse_ab,
-            test_mae_ab,
-            test_mse_ba,
-            test_mae_ba,
             test_rotations_ab,
             test_translations_ab,
             test_rotations_ab_pred,
@@ -129,12 +117,7 @@ def train(args, net, train_loader, test_loader, boardio, textio):
             test_translations_ba_pred,
             test_eulers_ab,
             test_eulers_ba,
-        ) = test_one_epoch(args, net, test_loader)
-        train_rmse_ab = np.sqrt(train_mse_ab)
-        test_rmse_ab = np.sqrt(test_mse_ab)
-
-        train_rmse_ba = np.sqrt(train_mse_ba)
-        test_rmse_ba = np.sqrt(test_mse_ba)
+        ) = one_epoch(args, net, test_loader, None, boardio, epoch, is_train = False)
 
         train_rotations_ab_pred_euler = npmat2euler(train_rotations_ab_pred)
         train_r_mse_ab = np.mean((train_rotations_ab_pred_euler - np.degrees(train_eulers_ab))**2)
@@ -172,10 +155,6 @@ def train(args, net, train_loader, test_loader, boardio, textio):
             best_test_loss = test_loss
             best_test_cycle_loss = test_cycle_loss
 
-            best_test_mse_ab = test_mse_ab
-            best_test_rmse_ab = test_rmse_ab
-            best_test_mae_ab = test_mae_ab
-
             best_test_r_mse_ab = test_r_mse_ab
             best_test_r_rmse_ab = test_r_rmse_ab
             best_test_r_mae_ab = test_r_mae_ab
@@ -183,10 +162,6 @@ def train(args, net, train_loader, test_loader, boardio, textio):
             best_test_t_mse_ab = test_t_mse_ab
             best_test_t_rmse_ab = test_t_rmse_ab
             best_test_t_mae_ab = test_t_mae_ab
-
-            best_test_mse_ba = test_mse_ba
-            best_test_rmse_ba = test_rmse_ba
-            best_test_mae_ba = test_mae_ba
 
             best_test_r_mse_ba = test_r_mse_ba
             best_test_r_rmse_ba = test_r_rmse_ba
@@ -210,46 +185,43 @@ def train(args, net, train_loader, test_loader, boardio, textio):
         textio.cprint("==TRAIN==")
         textio.cprint("A--------->B")
         textio.cprint(
-            f"EPOCH:: {epoch}, Loss: {train_loss}, Cycle Loss: {train_cycle_loss}, MSE: {train_mse_ab}, RMSE: {train_rmse_ab}, MAE: {train_mae_ab}, rot_MSE: {train_r_mse_ab}, rot_RMSE: {train_r_rmse_ab}, "
-            "rot_MAE: {train_r_mae_ab}, trans_MSE: {train_t_mse_ab}, trans_RMSE: {train_t_rmse_ab}, trans_MAE: {train_t_mae_ab}"
+            f"EPOCH:: {epoch}, Loss: {train_loss}, Cycle Loss: {train_cycle_loss}, rot_MSE: {train_r_mse_ab}, rot_RMSE: {train_r_rmse_ab}, \
+            rot_MAE: {train_r_mae_ab}, trans_MSE: {train_t_mse_ab}, trans_RMSE: {train_t_rmse_ab}, trans_MAE: {train_t_mae_ab}"
         )
 
         textio.cprint("B--------->A")
         textio.cprint(
-            f"EPOCH:: {epoch}, Loss: {train_loss}, Cycle Loss: {train_mse_ba}, MSE: {train_rmse_ba}, RMSE: {train_rmse_ba}, MAE: {train_mae_ba}, rot_MSE: {train_r_mse_ba}, rot_RMSE: {train_r_rmse_ba}, "
-            "rot_MAE: {train_r_mae_ba}, trans_MSE: {train_t_mse_ba}, trans_RMSE: {train_t_rmse_ba}, trans_MAE: {train_t_mae_ba}"
+            f"EPOCH:: {epoch}, Loss: {train_loss}, rot_MSE: {train_r_mse_ba}, rot_RMSE: {train_r_rmse_ba}, \
+            rot_MAE: {train_r_mae_ba}, trans_MSE: {train_t_mse_ba}, trans_RMSE: {train_t_rmse_ba}, trans_MAE: {train_t_mae_ba}"
         )
 
         textio.cprint("==TEST==")
         textio.cprint("A--------->B")
         textio.cprint(
-            f"EPOCH:: {epoch}, Loss: {test_loss}, Cycle Loss: {test_cycle_loss}, MSE: {test_mse_ab}, RMSE: {test_rmse_ab}, MAE: {test_mae_ab}, rot_MSE: {test_r_mse_ab}, rot_RMSE: {test_r_rmse_ab}, "
-            "rot_MAE: {test_r_mae_ab}, trans_MSE: {test_t_mse_ab}, trans_RMSE: {test_t_rmse_ab}, trans_MAE: {test_t_mae_ab}"
+            f"EPOCH:: {epoch}, Loss: {test_loss}, Cycle Loss: {test_cycle_loss}, rot_MSE: {test_r_mse_ab}, rot_RMSE: {test_r_rmse_ab}, \
+            rot_MAE: {test_r_mae_ab}, trans_MSE: {test_t_mse_ab}, trans_RMSE: {test_t_rmse_ab}, trans_MAE: {test_t_mae_ab}"
         )
 
         textio.cprint("B--------->A")
         textio.cprint(
-            f"EPOCH:: {epoch}, Loss: {test_loss}, Cycle Loss: {test_mse_ba}, MSE: {test_rmse_ba}, RMSE: {test_rmse_ba}, MAE: {test_mae_ba}, rot_MSE: {test_r_mse_ba}, rot_RMSE: {test_r_rmse_ba}, "
-            "rot_MAE: {test_r_mae_ba}, trans_MSE: {test_t_mse_ba}, trans_RMSE: {test_t_rmse_ba}, trans_MAE: {test_t_mae_ba}"
+            f"EPOCH:: {epoch}, Loss: {test_loss}, rot_MSE: {test_r_mse_ba}, rot_RMSE: {test_r_rmse_ba}, \
+            rot_MAE: {test_r_mae_ba}, trans_MSE: {test_t_mse_ba}, trans_RMSE: {test_t_rmse_ba}, trans_MAE: {test_t_mae_ba}"
         )
 
         textio.cprint("==BEST TEST==")
         textio.cprint("A--------->B")
         textio.cprint(
-            f"EPOCH:: {epoch}, Loss: {best_test_loss}, Cycle Loss: {best_test_cycle_loss}, MSE: {best_test_mse_ab}, RMSE: {best_test_rmse_ab}, MAE: {best_test_mae_ab}, rot_MSE: {best_test_r_mse_ab}, rot_RMSE: {best_test_r_rmse_ab}, "
-            "rot_MAE: {best_test_r_mae_ab}, trans_MSE: {best_test_t_mse_ab}, trans_RMSE: {best_test_t_rmse_ab}, trans_MAE: {best_test_t_mae_ab}"
+            f"EPOCH:: {epoch}, Loss: {best_test_loss}, rot_MSE: {best_test_r_mse_ab}, rot_RMSE: {best_test_r_rmse_ab}, \
+            rot_MAE: {best_test_r_mae_ab}, trans_MSE: {best_test_t_mse_ab}, trans_RMSE: {best_test_t_rmse_ab}, trans_MAE: {best_test_t_mae_ab}"
         )
 
         textio.cprint("B--------->A")
         textio.cprint(
-            f"EPOCH:: {epoch}, Loss: {best_test_loss}, Cycle Loss: {best_test_mse_ba}, MSE: {best_test_rmse_ba}, RMSE: {best_test_rmse_ba}, MAE: {best_test_mae_ba}, rot_MSE: {best_test_r_mse_ba}, rot_RMSE: {best_test_r_rmse_ba}, "
-            "rot_MAE: {best_test_r_mae_ba}, trans_MSE: {best_test_t_mse_ba}, trans_RMSE: {best_test_t_rmse_ba}, trans_MAE: {best_test_t_mae_ba}"
+            f"EPOCH:: {epoch}, Loss: {best_test_loss}, rot_MSE: {best_test_r_mse_ba}, rot_RMSE: {best_test_r_rmse_ba}, \
+            rot_MAE: {best_test_r_mae_ba}, trans_MSE: {best_test_t_mse_ba}, trans_RMSE: {best_test_t_rmse_ba}, trans_MAE: {best_test_t_mae_ba}"
         )
 
         boardio.add_scalar("A->B/train/loss", train_loss, epoch)
-        boardio.add_scalar("A->B/train/MSE", train_mse_ab, epoch)
-        boardio.add_scalar("A->B/train/RMSE", train_rmse_ab, epoch)
-        boardio.add_scalar("A->B/train/MAE", train_mae_ab, epoch)
         boardio.add_scalar("A->B/train/rotation/MSE", train_r_mse_ab, epoch)
         boardio.add_scalar("A->B/train/rotation/RMSE", train_r_rmse_ab, epoch)
         boardio.add_scalar("A->B/train/rotation/MAE", train_r_mae_ab, epoch)
@@ -258,9 +230,6 @@ def train(args, net, train_loader, test_loader, boardio, textio):
         boardio.add_scalar("A->B/train/translation/MAE", train_t_mae_ab, epoch)
 
         boardio.add_scalar("B->A/train/loss", train_loss, epoch)
-        boardio.add_scalar("B->A/train/MSE", train_mse_ba, epoch)
-        boardio.add_scalar("B->A/train/RMSE", train_rmse_ba, epoch)
-        boardio.add_scalar("B->A/train/MAE", train_mae_ba, epoch)
         boardio.add_scalar("B->A/train/rotation/MSE", train_r_mse_ba, epoch)
         boardio.add_scalar("B->A/train/rotation/RMSE", train_r_rmse_ba, epoch)
         boardio.add_scalar("B->A/train/rotation/MAE", train_r_mae_ba, epoch)
@@ -270,9 +239,6 @@ def train(args, net, train_loader, test_loader, boardio, textio):
 
         ############TEST
         boardio.add_scalar("A->B/test/loss", test_loss, epoch)
-        boardio.add_scalar("A->B/test/MSE", test_mse_ab, epoch)
-        boardio.add_scalar("A->B/test/RMSE", test_rmse_ab, epoch)
-        boardio.add_scalar("A->B/test/MAE", test_mae_ab, epoch)
         boardio.add_scalar("A->B/test/rotation/MSE", test_r_mse_ab, epoch)
         boardio.add_scalar("A->B/test/rotation/RMSE", test_r_rmse_ab, epoch)
         boardio.add_scalar("A->B/test/rotation/MAE", test_r_mae_ab, epoch)
@@ -281,9 +247,6 @@ def train(args, net, train_loader, test_loader, boardio, textio):
         boardio.add_scalar("A->B/test/translation/MAE", test_t_mae_ab, epoch)
 
         boardio.add_scalar("B->A/test/loss", test_loss, epoch)
-        boardio.add_scalar("B->A/test/MSE", test_mse_ba, epoch)
-        boardio.add_scalar("B->A/test/RMSE", test_rmse_ba, epoch)
-        boardio.add_scalar("B->A/test/MAE", test_mae_ba, epoch)
         boardio.add_scalar("B->A/test/rotation/MSE", test_r_mse_ba, epoch)
         boardio.add_scalar("B->A/test/rotation/RMSE", test_r_rmse_ba, epoch)
         boardio.add_scalar("B->A/test/rotation/MAE", test_r_mae_ba, epoch)
@@ -293,9 +256,6 @@ def train(args, net, train_loader, test_loader, boardio, textio):
 
         ############BEST TEST
         boardio.add_scalar("A->B/best_test/loss", best_test_loss, epoch)
-        boardio.add_scalar("A->B/best_test/MSE", best_test_mse_ab, epoch)
-        boardio.add_scalar("A->B/best_test/RMSE", best_test_rmse_ab, epoch)
-        boardio.add_scalar("A->B/best_test/MAE", best_test_mae_ab, epoch)
         boardio.add_scalar("A->B/best_test/rotation/MSE", best_test_r_mse_ab, epoch)
         boardio.add_scalar("A->B/best_test/rotation/RMSE", best_test_r_rmse_ab, epoch)
         boardio.add_scalar("A->B/best_test/rotation/MAE", best_test_r_mae_ab, epoch)
@@ -304,9 +264,6 @@ def train(args, net, train_loader, test_loader, boardio, textio):
         boardio.add_scalar("A->B/best_test/translation/MAE", best_test_t_mae_ab, epoch)
 
         boardio.add_scalar("B->A/best_test/loss", best_test_loss, epoch)
-        boardio.add_scalar("B->A/best_test/MSE", best_test_mse_ba, epoch)
-        boardio.add_scalar("B->A/best_test/RMSE", best_test_rmse_ba, epoch)
-        boardio.add_scalar("B->A/best_test/MAE", best_test_mae_ba, epoch)
         boardio.add_scalar("B->A/best_test/rotation/MSE", best_test_r_mse_ba, epoch)
         boardio.add_scalar("B->A/best_test/rotation/RMSE", best_test_r_rmse_ba, epoch)
         boardio.add_scalar("B->A/best_test/rotation/MAE", best_test_r_mae_ba, epoch)
@@ -403,14 +360,14 @@ def main():
     parser.add_argument(
         "--batch_size",
         type=int,
-        default=32,
+        default=12,
         metavar="batch_size",
         help="Size of batch)",
     )
     parser.add_argument(
         "--test_batch_size",
         type=int,
-        default=10,
+        default=12,
         metavar="batch_size",
         help="Size of batch)",
     )

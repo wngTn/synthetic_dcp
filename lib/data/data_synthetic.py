@@ -36,6 +36,7 @@ class SmplSynthetic(Dataset):
 
     def __init__(self, split, num_output_points=1024, transform=lambda x: x):
         self.smpl_poses = unpack_poses(PATH)
+        self.smpl_poses_len = len(self.smpl_poses)
         self.transform = transform
         self.num_output_points = num_output_points
         self.factor = 4
@@ -43,7 +44,7 @@ class SmplSynthetic(Dataset):
         
         # choose dims of dataset
         self.test_len = 250
-        self.len = 2500 if split == 'train' else self.test_len
+        self.len = 2500 if split == 'train' else 10 if split == 'overfit' else self.test_len
         self.split = split
 
     def gaussian_noise(self, pcd, variance):
@@ -56,8 +57,8 @@ class SmplSynthetic(Dataset):
         bbox = o3d.geometry.AxisAlignedBoundingBox.create_from_points(mesh_head.vertices)
         bbox = bbox.scale(1.05, bbox.get_center())
 
-        bbox.max_bound = bbox.max_bound + np.array([0.15, 0.15, 0.15])
-        bbox.min_bound = bbox.min_bound - np.array([0.15, 0.15, 0.15])
+        bbox.max_bound = bbox.max_bound + np.array([0.2, 0.2, 0.2])
+        bbox.min_bound = bbox.min_bound - np.array([0.2, 0.2, 0.2])
 
         return mesh_full.crop(bbox)
 
@@ -74,10 +75,11 @@ class SmplSynthetic(Dataset):
         anglex = np.random.uniform() * np.pi / self.factor
         angley = np.random.uniform() * np.pi / self.factor
         anglez = np.random.uniform() * np.pi / self.factor
-        
-        # anglex = 0.5 * np.pi / self.factor 
-        # angley = 0.5 * np.pi / self.factor 
-        # anglez = 0.5 * np.pi / self.factor
+
+        if self.split == 'overfit':
+            anglex = .25
+            angley = .25
+            anglez = .25
         
         cosx = np.cos(anglex)
         cosy = np.cos(angley)
@@ -91,12 +93,13 @@ class SmplSynthetic(Dataset):
         R_ab = Rx.dot(Ry).dot(Rz)
         R_ba = R_ab.T
         translation_ab = np.array([
-            np.random.uniform(-0.15, 0.15),
-            np.random.uniform(-0.15, 0.15),
-            np.random.uniform(-0.15, 0.15),
+            np.random.uniform(-0.25, 0.25),
+            np.random.uniform(-0.25, 0.25),
+            np.random.uniform(-0.25, 0.25),
         ])
-        
-        # translation_ab = np.array([0.15, 0.15, -0.15])
+
+        if self.split == 'overfit':
+            translation_ab = np.array([0.15, 0.15, -0.15])
         
         translation_ba = -R_ba.dot(translation_ab)
 
@@ -118,30 +121,12 @@ class SmplSynthetic(Dataset):
         # e.g. len == 200 now actually means only choosing randomly from the first 200 and not 200 from all 90.000 poses
         # this code rn is ugly but makes sure the test data is unseen
         if self.split == 'train':
-            smpl_pose = self.smpl_poses[item + self.test_len]
+            smpl_pose = self.smpl_poses[np.random.randint(self.test_len, self.smpl_poses_len)]
+        elif self.split == 'overfit':
+            smpl_pose = self.smpl_poses[np.random.randint(0, 10)]
         else:
             smpl_pose = self.smpl_poses[item]
 
-        poses = np.array([smpl_pose['pose_params']])
-        shapes = np.array([smpl_pose['shape_params']])
-        Rh = np.array([[1, -1, -1]])
-        vertices = self.body_model(poses, shapes, Rh=Rh, Th=None, return_verts=True, return_tensor=False)[0]
-
-        # we shouldn't randomize the dataloading here
-        # the torch dataloader introduces shuffeling on its own already
-        # e.g. len == 200 now actually means only choosing randomly from the first 200 and not 200 from all 90.000 poses
-        # this code rn is ugly but makes sure the test data is unseen
-        if self.split == 'train':
-            smpl_pose = self.smpl_poses[item + self.test_len]
-        else:
-            smpl_pose = self.smpl_poses[item + self.test_len]
-
-        poses = np.array([smpl_pose['pose_params']])
-        shapes = np.array([smpl_pose['shape_params']])
-        Rh = np.array([[1, -1, -1]])
-        vertices = self.body_model(poses, shapes, Rh=Rh, Th=None, return_verts=True, return_tensor=False)[0]
-
-        smpl_pose = np.random.choice(self.smpl_poses)
         poses = np.array([smpl_pose['pose_params']])
         shapes = np.array([smpl_pose['shape_params']])
         Rh = np.array([[1, -1, -1]])
@@ -172,15 +157,12 @@ class SmplSynthetic(Dataset):
 
         # uniformly downsample the meshes so we can have the dimension the rigid regestration requires
         augmented_pcd = augmented_mesh.sample_points_uniformly(number_of_points=self.num_output_points)
-        # augmented_pcd = augmented_mesh.sample_points_poisson_disk(number_of_points=self.num_output_points,
-        #                                                           pcl=augmented_pcd)
+        # augmented_pcd.points = o3d.utility.Vector3dVector(np.array(augmented_pcd.points)[np.random.choice(len(augmented_pcd.points), self.num_output_points)])
 
         transformed_head_pcd = transformed_head_mesh.sample_points_uniformly(number_of_points=self.num_output_points)
-        # transformed_head_pcd = transformed_head_mesh.sample_points_poisson_disk(number_of_points=self.num_output_points,
-        #                                                                         pcl=transformed_head_pcd)
 
         # add some noise to more closely match natural noise of messurements
-        augmented_pcd = self.gaussian_noise(augmented_pcd, .01)
+        augmented_pcd = self.gaussian_noise(augmented_pcd, .04)
 
         pointcloud1 = np.random.permutation(np.array(augmented_pcd.points)).T
         pointcloud2 = np.random.permutation(np.array(transformed_head_pcd.points)).T

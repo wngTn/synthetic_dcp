@@ -241,23 +241,24 @@ class Aligner:
                 number_of_points=10000
             )
             head_mesh_point_cloud = head_mesh.sample_points_poisson_disk(
-                number_of_points=1500, pcl=head_mesh_point_cloud
+                number_of_points=1024, pcl=head_mesh_point_cloud
             )
 
             # crop the point cloud
             bbox = o3d.geometry.AxisAlignedBoundingBox.create_from_points(
                 head_mesh.vertices
             )
-            bbox = bbox.scale(1.25, bbox.get_center())
+            bbox = bbox.scale(1.05, bbox.get_center())
 
             # a = bbox.extent * np.array([3, 1, 4])
             # bbox.extent = a
-            bbox.max_bound = bbox.max_bound + np.array([0.25, 0.25, 0.25])
-            bbox.min_bound = bbox.min_bound - np.array([0.25, 0.25, 0.25])
+            bbox.max_bound = bbox.max_bound + np.array([0.15, 0.15, 0.15])
+            bbox.min_bound = bbox.min_bound - np.array([0.15, 0.15, 0.15])
             bbox.color = [0.6, 0.6, 0.6]
             vis.add_geometry(bbox)
 
             head_point_cloud = head_point_cloud.crop(bbox)
+            
 
             # Preprocessing the point clouds:
 
@@ -270,6 +271,7 @@ class Aligner:
             )
             head_mesh_point_cloud.paint_uniform_color([1, 0, 0])
             head_point_cloud = head_point_cloud.voxel_down_sample(self.voxel_size)
+            head_mesh_point_cloud = np.random.choice(len(head_mesh_point_cloud), 1024)
 
             # adds the objects to the visualization window
             # vis.add_geometry(head_mesh)

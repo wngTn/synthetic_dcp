@@ -7,15 +7,32 @@ from lib.utils.util import create_logger
 
 from lib.registration.FilterReg import FilterReg
 from lib.registration.ICP import ICP
+from registration.DCPReg import DCPReg
 from lib.registration.Aligner import Aligner
 from lib.utils.util import load_mesh, add_gear_to_smpl_mesh
 from lib.utils.indices import HEAD
 import numpy as np
+import argparse
+from core.configs import get_cfg_defaults
 
 FRAME_ID = 2080
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Visualize in 3D')
+    parser.add_argument('--cfg',
+                        help='configuration file name',
+                        type=str,
+                        default='configs/default.yaml')
+
+    args, _ = parser.parse_known_args()
+    cfg = get_cfg_defaults()
+    cfg.merge_from_file(args.cfg)
+    cfg.freeze()
+    return cfg
+
 
 def main():
+    cfg = parse_args()
     logger, _ = create_logger()
     logger.setLevel("INFO")
     logger.info("Starting Registration in debug mode...")
@@ -51,8 +68,9 @@ def main():
 
     icp = ICP(**registration_params_icp)
     filterreg = FilterReg(**registration_params_filterreg)
+    dcp = DCPReg(cfg=cfg)
 
-    aligner = Aligner(voxel_size=0.0125, rigidRegistration=filterreg, icp=icp)
+    aligner = Aligner(voxel_size=0.0125, rigidRegistration=dcp, icp=icp)
     aligner.align_meshes_debug(merged_meshes, merged_pcd)
 
 

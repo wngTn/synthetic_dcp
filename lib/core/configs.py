@@ -1,0 +1,36 @@
+from yacs.config import CfgNode as CN
+
+_C = CN()
+
+_C.NET = CN()
+_C.NET.EMB_NN = "dgcnn"
+_C.NET.POINTER = "transformer"
+_C.NET.HEAD = "svd"
+_C.NET.EMB_DIMS = 512
+_C.NET.N_BLOCKS = 1
+_C.NET.N_HEADS = 4
+_C.NET.FF_DIMS = 1024
+_C.NET.DROPOUT = 0.0
+
+_C.SEED = 1234
+
+_C.TRAINING = CN()
+_C.TRAINING.OVERFIT = False
+_C.TRAINING.BATCH_SIZE = 32
+_C.TRAINING.USE_SGD = False
+_C.TRAINING.EPOCHS = 5
+_C.TRAINING.LR = 1e-3
+_C.TRAINING.MOMENTUM = 0.9
+_C.TRAINING.CYCLE = False
+_C.TRAINING.NUM_POINTS = 1024
+_C.TRAINING.FACTOR = 4
+
+
+_C.TESTING = CN()
+_C.TESTING.BATCH_SIZE = 10
+_C.TESTING.MODEL = ""
+
+
+
+def get_cfg_defaults():
+    return _C.clone()

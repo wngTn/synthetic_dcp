@@ -8,6 +8,7 @@ from urllib import request
 from zipfile import ZipFile
 from io import BytesIO
 import ssl
+import open3d as o3d
 
 # Part of the code is referred from: https://github.com/charlesq34/pointnet
 
@@ -152,8 +153,31 @@ class ModelNet40(Dataset):
 
 
 if __name__ == "__main__":
-    train = ModelNet40(1024)
-    test = ModelNet40(1024, "test")
-    for data in train:
-        print(len(data))
-        break
+    # train = ModelNet40(1024)
+    # test = ModelNet40(1024, "test")
+    # for data in train:
+    #     print(len(data))
+    #     break
+    data = ModelNet40(1024, "test", gaussian_noise=True)
+
+    for i, (src, target, rotation_ab, translation_ab, rotation_ba, translation_ba,
+            euler_ab,
+            euler_ba) in enumerate(data):
+        if i == 10:
+            break
+        # fig = plt.figure(figsize=(8, 8))
+        # ax = fig.add_subplot(111, projection='3d')
+
+        # ax.scatter(src[0], src[1], src[2], color="r")
+        # ax.scatter(target[0], target[1], target[2], color='g')
+
+        # fig.savefig(f"tmp_{i}.pdf")
+        pcd = o3d.geometry.PointCloud()
+
+        points = np.concatenate((src.T, target.T, (target.T - translation_ab) @ rotation_ab ), axis=0)
+        colors = np.concatenate((np.repeat([[1, 1, 1]], 1024, axis=0), np.repeat([[1, 0, 0]], 1024, axis=0),  np.repeat([[0, 0, 1]], 1024, axis=0)))
+
+        pcd.points = o3d.utility.Vector3dVector(points)
+        pcd.colors = o3d.utility.Vector3dVector(colors)
+
+        o3d.io.write_point_cloud(f"tmp2_{i}.ply", pcd)

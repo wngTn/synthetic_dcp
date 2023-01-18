@@ -263,8 +263,12 @@ def train_prnet(args, cfg, net, train_loader, test_loader, boardio):
     info_test_best = None
 
     for epoch in range(cfg.TRAINING.EPOCHS):
-        info_train = net._train_one_epoch(epoch=epoch, train_loader=train_loader, opt=opt, boardio=boardio)
-        info_test = net._test_one_epoch(epoch=epoch, test_loader=test_loader, boardio=boardio)
+        _ = net._one_epoch(epoch=epoch, data_loader=train_loader, opt=opt, boardio=boardio, is_train = True)
+        
+        # this is absurd.... eval takes more memory than training as there are gradients computed regardless.... therefore deactivate it like this
+        with torch.no_grad():
+            info_test = net._one_epoch(epoch=epoch, data_loader=test_loader, boardio=boardio, is_train = False)
+        
         scheduler.step()
 
         if info_test_best is None or info_test_best['loss'] > info_test['loss']:

@@ -1,7 +1,7 @@
 NET:
-  EMB_NN: 'pointnet'
-  POINTER: 'transformer'
-  HEAD: 'svd'
+  EMB_NN: 'dgcnn'
+  POINTER: 'identity'
+  HEAD: 'mlp'
   EMB_DIMS: 512
   N_BLOCKS: 1
   N_HEADS: 4
@@ -12,7 +12,7 @@ SEED: 1234
 
 TRAINING:
   OVERFIT: False
-  BATCH_SIZE: 16
+  BATCH_SIZE: 32
   EPOCHS: 250
   LR: 1e-3
   MOMENTUM: 0.9
@@ -23,4 +23,4 @@ TRAINING:
 
 TESTING:
   BATCH_SIZE: 5
-  MODEL: '/home/tonyw/Documents/ml_3d_project/checkpoints/01_16-21_05_21/models/model.227.t7'
+  MODEL: 'checkpoints/01_18-08_46_57/models/model.latest.t7'

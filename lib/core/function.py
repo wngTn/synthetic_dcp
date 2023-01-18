@@ -73,13 +73,11 @@ def one_epoch(cfg, net, data_loader, opt, boardio, epoch, is_train):
         translations_ba_pred.append(translation_ba_pred.detach().cpu().numpy())
         eulers_ba.append(euler_ba.numpy())
 
-        # transformed_src = transform_point_cloud(src, rotation_ab_pred, translation_ab_pred)
-
-        # transformed_target = transform_point_cloud(target, rotation_ba_pred, translation_ba_pred)
         ###########################
         identity = torch.eye(3).cuda().unsqueeze(0).repeat(batch_size, 1, 1)
         loss = F.mse_loss(torch.matmul(rotation_ab_pred.transpose(2, 1), rotation_ab), identity) + F.mse_loss(
             translation_ab_pred, translation_ab)
+        
         if cfg.TRAINING.CYCLE:
             rotation_loss = F.mse_loss(torch.matmul(rotation_ba_pred, rotation_ab_pred), identity.clone())
             translation_loss = torch.mean(
@@ -103,17 +101,17 @@ def one_epoch(cfg, net, data_loader, opt, boardio, epoch, is_train):
             total_cycle_loss = total_cycle_loss + cycle_loss.item() * 0.1 * batch_size
 
         if not is_train or it % 9 == 0 or cfg.TRAINING.OVERFIT:
-            fig = visualize_transformation(
-                src.cpu().numpy(),
-                target.cpu().numpy(),
-                rotation_ab.cpu().numpy(),
-                translation_ab.cpu().numpy(),
-                rotation_ab_pred.detach().cpu().numpy(),
-                translation_ab_pred.detach().cpu().numpy(),
-            )
-            boardio.add_figure(f'predictions_{"train" if is_train else "test"}',
-                               fig,
-                               global_step=(epoch + 1) * (it + 1))
+            # fig = visualize_transformation(
+            #     src.cpu().numpy(),
+            #     target.cpu().numpy(),
+            #     rotation_ab.cpu().numpy(),
+            #     translation_ab.cpu().numpy(),
+            #     rotation_ab_pred.detach().cpu().numpy(),
+            #     translation_ab_pred.detach().cpu().numpy(),
+            # )
+            # boardio.add_figure(f'predictions_{"train" if is_train else "test"}',
+            #                    fig,
+            #                    global_step=(epoch + 1) * (it + 1))
             pcds = visualize_pred_transformation(
                 src.cpu().numpy(),
                 target.cpu().numpy(),

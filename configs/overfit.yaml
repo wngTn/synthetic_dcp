@@ -1,7 +1,7 @@
 NET:
-  EMB_NN: 'pointnet'
-  POINTER: 'transformer'
-  HEAD: 'svd'
+  EMB_NN: 'dgcnn'
+  POINTER: 'identity'
+  HEAD: 'mlp'
   EMB_DIMS: 512
   N_BLOCKS: 1
   N_HEADS: 4

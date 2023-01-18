@@ -50,7 +50,9 @@ def test(cfg, net, test_loader):
     net.eval()
 
     for it, item in tqdm(enumerate(test_loader), total=len(test_loader)):
-        if it == 10:
+        if it <= 100:
+            continue
+        if it >= 110:
             break
         j = 0
         for src, target in zip(item["source"], item["target"]):
@@ -60,7 +62,8 @@ def test(cfg, net, test_loader):
             if len(src) == 0 or len(target) == 0:
                 continue
 
-            (rotation_ab_pred,
+            (
+                rotation_ab_pred,
                 translation_ab_pred,
                 rotation_ba_pred,
                 translation_ba_pred,
@@ -68,15 +71,19 @@ def test(cfg, net, test_loader):
 
             pcd = o3d.geometry.PointCloud()
 
-            points = np.concatenate((src[0].cpu().detach().numpy().T, target[0].cpu().detach().numpy().T, (target[0].cpu().detach().numpy().T - translation_ab_pred[0].cpu().detach().numpy()) @ rotation_ab_pred[0].cpu().detach().numpy()), axis=0)
-            colors = np.concatenate((np.repeat([[1, 1, 1]], 1024, axis=0), np.repeat([[1, 0, 0]], 1024, axis=0),  np.repeat([[0, 0, 1]], 1024, axis=0)))
+            points = np.concatenate(
+                (src[0].cpu().detach().numpy().T, target[0].cpu().detach().numpy().T,
+                 (target[0].cpu().detach().numpy().T - translation_ab_pred[0].cpu().detach().numpy())
+                 @ rotation_ab_pred[0].cpu().detach().numpy()),
+                axis=0)
+            colors = np.concatenate((np.repeat([[1, 1, 1]], 1024,
+                                               axis=0), np.repeat([[1, 0, 0]], 1024,
+                                                                  axis=0), np.repeat([[0, 0, 1]], 1024, axis=0)))
 
             pcd.points = o3d.utility.Vector3dVector(points)
             pcd.colors = o3d.utility.Vector3dVector(colors)
 
             o3d.io.write_point_cloud(f"test{it}_{j}.ply", pcd)
-
-        
 
 
 def main():
@@ -86,10 +93,7 @@ def main():
     torch.cuda.manual_seed_all(cfg.SEED)
     np.random.seed(cfg.SEED)
 
-
-    test_loader = DataLoader(
-        TestData(1024)
-    )
+    test_loader = DataLoader(TestData(1024), num_workers=8)
 
     net = DCP(cfg).cuda()
 

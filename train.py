@@ -284,7 +284,7 @@ def train_prnet(args, cfg, net, train_loader, test_loader, boardio):
 
 def main():
     args, cfg = parse_args()
-    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = True
     torch.manual_seed(cfg.SEED)
     torch.cuda.manual_seed_all(cfg.SEED)
     np.random.seed(cfg.SEED)
@@ -297,6 +297,7 @@ def main():
         batch_size=cfg.TRAINING.BATCH_SIZE,
         num_workers=os.cpu_count(),
         shuffle=True,
+        pin_memory=True,
         drop_last=False,
     )
     else:
@@ -307,6 +308,7 @@ def main():
             batch_size=cfg.TRAINING.BATCH_SIZE,
             num_workers=os.cpu_count(),
             shuffle=True,
+            pin_memory=True,
             drop_last=True,
         )
     test_loader = DataLoader(
@@ -315,6 +317,7 @@ def main():
                       transform=SMPLAugmentation(glasses_probability=0.5)),
         batch_size=cfg.TESTING.BATCH_SIZE,
         num_workers=os.cpu_count(),
+        pin_memory=True,
         shuffle=False,
         drop_last=False,
     )

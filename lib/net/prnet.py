@@ -696,9 +696,7 @@ class PRNet(nn.Module):
 
         return rotation_ab_pred, translation_ab_pred
 
-    def _one_batch(self, src, tgt, rotation_ab, translation_ab, opt, is_train):
-        if is_train:
-            opt.zero_grad()
+    def _one_batch(self, src, tgt, rotation_ab, translation_ab):
         batch_size = src.size(0)
         identity = torch.eye(3, device=src.device).unsqueeze(0).repeat(batch_size, 1, 1)
 
@@ -781,12 +779,8 @@ class PRNet(nn.Module):
             
             src = transform_point_cloud(src, rotation_ab_pred_i, translation_ab_pred_i)
             
-        if is_train:
-            total_loss.backward()
-            opt.step()
-            
         return (
-            total_loss.item(),
+            total_loss,
             total_feature_alignment_loss.item(),
             total_cycle_consistency_loss.item(),
             total_scale_consensus_loss,
@@ -811,16 +805,18 @@ class PRNet(nn.Module):
         total_cycle_consistency_loss = 0.0
         total_scale_consensus_loss = 0.0
         for it, data in enumerate(tqdm(data_loader, total=len(data_loader))):
+            data_4_gpu = data[:4]
             (
                 source,
                 target,
                 rotation_ab,
                 translation_ab,
-                rotation_ba,
-                translation_ba,
-                euler_ab,
-                euler_ba,
-            ) = [d.cuda() for d in data]
+                # rotation_ba,
+                # translation_ba,
+                # euler_ab,
+                # euler_ba,
+            ) = [d.to("cuda:0", non_blocking=True) for d in data_4_gpu]
+            
             (
                 loss,
                 feature_alignment_loss,
@@ -829,11 +825,20 @@ class PRNet(nn.Module):
                 rotation_ab_pred,
                 translation_ab_pred,
             ) = self._one_batch(
-                source, target, rotation_ab, translation_ab, opt, is_train=is_train
+                source, target, rotation_ab, translation_ab
             )
+            
+            if is_train :
+                loss.backward()
+                # only compute gradient every 8 iteration
+                if it % 8 == 0 or it == len(data_loader):
+                    opt.step()
+                    opt.zero_grad(set_to_none=True)
+
+
             batch_size = source.size(0)
             num_examples += batch_size
-            total_loss += loss * batch_size
+            total_loss += loss.item() * batch_size
             total_feature_alignment_loss += feature_alignment_loss * batch_size
             
             total_cycle_consistency_loss += cycle_consistency_loss * batch_size
@@ -841,18 +846,18 @@ class PRNet(nn.Module):
             total_scale_consensus_loss += scale_consensus_loss * batch_size
             
 
-            rotations_ab.append(rotation_ab.detach().cpu().numpy())
-            translations_ab.append(translation_ab.detach().cpu().numpy())
-            rotations_ab_pred.append(rotation_ab_pred.detach().cpu().numpy())
-            translations_ab_pred.append(translation_ab_pred.detach().cpu().numpy())
-            eulers_ab.append(euler_ab.cpu().numpy())
+            rotations_ab.append(rotation_ab.detach().to("cpu", non_blocking=True).numpy())
+            translations_ab.append(translation_ab.detach().to("cpu", non_blocking=True).numpy())
+            rotations_ab_pred.append(rotation_ab_pred.detach().to("cpu", non_blocking=True).numpy())
+            translations_ab_pred.append(translation_ab_pred.detach().to("cpu", non_blocking=True).numpy())
+            eulers_ab.append(data[-2]) # euler_ab
 
             if it == len(data_loader) // 10:
                 pcds = visualize_pred_transformation(
-                    source.cpu().numpy(),
-                    target.cpu().numpy(),
-                    rotation_ab_pred.detach().cpu().numpy(),
-                    translation_ab_pred.detach().cpu().numpy(),
+                    source[:min(len(source), 10)].to("cpu", non_blocking=True).numpy(),
+                    target[:min(len(source), 10)].to("cpu", non_blocking=True).numpy(),
+                    rotation_ab_pred[:min(len(source), 10)].detach().to("cpu", non_blocking=True).numpy(),
+                    translation_ab_pred[:min(len(source), 10)].detach().to("cpu", non_blocking=True).numpy(),
                 )
                 for jk, pcd in enumerate(pcds):
                     if not os.path.exists("output_debug"):

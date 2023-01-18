@@ -6,6 +6,7 @@ from scipy.spatial.transform import Rotation as R
 import open3d as o3d
 from copy import deepcopy
 import matplotlib.pyplot as plt
+import torch
 
 from utils.util import unpack_poses, add_gear_to_smpl_mesh
 from utils.indices import HEAD
@@ -133,7 +134,9 @@ class SmplSynthetic(Dataset):
         shapes = np.array([smpl_pose['shape_params']])
         Rh = np.array([[1, -1, -1]])
         
-        vertices = self.body_model(poses, shapes, Rh=Rh, Th=None, return_verts=True, return_tensor=False)[0]
+        with torch.no_grad():
+            vertices = self.body_model(poses, shapes, Rh=Rh, Th=None, return_verts=True, return_tensor=False)[0]
+            
         rotation = R.from_euler("z", [np.random.uniform() * np.pi * 2])
         vertices = rotation.apply(vertices)
         # create the smpl mesh

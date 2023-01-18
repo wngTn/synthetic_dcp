@@ -35,7 +35,7 @@ This GIF visualizes 100 poses; it was created with `scripts/peak_synthetic_smpl.
 ├── README.md
 ├── data
 │   ├── mesh_files
-│	├── smpl_models 
+│   ├── smpl_models 
 │   └── trial
 ├── scripts
 │   ├── ...
@@ -49,17 +49,11 @@ This GIF visualizes 100 poses; it was created with `scripts/peak_synthetic_smpl.
 ```
 
 ## Prerequisites 
-PyTorch>=1.0: https://pytorch.org
 
-scipy>=1.2 
 
-numpy
-
-h5py
-
-tqdm
-
-TensorboardX: https://github.com/lanpa/tensorboardX
+```
+pip install -r requirements.txt
+```
 
 ## Training
 

@@ -12,7 +12,7 @@ SEED: 1234
 
 TRAINING:
   OVERFIT: True
-  BATCH_SIZE: 16
+  BATCH_SIZE: 10
   EPOCHS: 250
   LR: 1e-3
   MOMENTUM: 0.9
@@ -22,5 +22,5 @@ TRAINING:
 
 
 TESTING:
-  BATCH_SIZE: 5
+  BATCH_SIZE: 10
   MODEL: '/home/tonyw/Documents/ml_3d_project/checkpoints/01_16-21_05_21/models/model.227.t7'

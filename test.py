@@ -12,7 +12,7 @@ import __init_paths__
 from lib.data.dataloading import ModelNet40
 from core.function import one_epoch
 from data.testData import TestData
-from lib.net.model import DCP
+from lib.net.dcp import DCP
 from lib.utils.util import transform_point_cloud, npmat2euler
 import numpy as np
 from torch.utils.data import DataLoader

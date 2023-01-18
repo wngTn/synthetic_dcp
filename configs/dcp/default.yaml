@@ -12,7 +12,7 @@ SEED: 1234
 
 TRAINING:
   OVERFIT: False
-  BATCH_SIZE: 32
+  BATCH_SIZE: 10
   EPOCHS: 250
   LR: 1e-3
   MOMENTUM: 0.9
@@ -22,5 +22,5 @@ TRAINING:
 
 
 TESTING:
-  BATCH_SIZE: 5
+  BATCH_SIZE: 10
   MODEL: 'checkpoints/01_18-08_46_57/models/model.latest.t7'

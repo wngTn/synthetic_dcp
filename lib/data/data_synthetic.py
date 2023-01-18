@@ -42,6 +42,7 @@ class SmplSynthetic(Dataset):
         self.augmented_mesh_output_points = num_output_points
         self.factor = 4
         self.body_model = load_model(gender="neutral", model_path=Path("data").joinpath("smpl_models"))
+        self.body_model.eval()
         
         # choose dims of dataset
         self.test_len = 250
@@ -149,7 +150,7 @@ class SmplSynthetic(Dataset):
         smpl_mesh.translate(-head_center)
         original_head_mesh.translate(-head_center)
 
-        # get the rotated head (problem) and the inverse rotation (solution) of the rigid regestration problem
+        # get the rotated head (problem) and the inverse rotation (solution) of the rigid registration problem
         transformed_head_mesh, R_ab, translation_ab, R_ba, translation_ba, euler_ab, euler_ba = self.get_mesh_source_and_rotation_target(
             smpl_mesh)
 
@@ -159,7 +160,7 @@ class SmplSynthetic(Dataset):
         # crop mesh with bounding box
         augmented_mesh = self.crop_mesh(augmented_mesh, transformed_head_mesh)
 
-        # uniformly downsample the meshes so we can have the dimension the rigid regestration requires
+        # uniformly downsample the meshes so we can have the dimension the rigid registration requires
         augmented_pcd = augmented_mesh.sample_points_uniformly(number_of_points=self.augmented_mesh_output_points)
         # augmented_pcd.points = o3d.utility.Vector3dVector(np.array(augmented_pcd.points)[np.random.choice(len(augmented_pcd.points), self.num_output_points)])
 

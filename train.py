@@ -9,10 +9,10 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import MultiStepLR
 
 import __init_paths__
-from lib.data.dataloading import ModelNet40
 from core.function import one_epoch
 from data.data_synthetic import SmplSynthetic, SMPLAugmentation
-from lib.net.model import DCP
+from lib.net.dcp import DCP
+from lib.net.prnet import PRNet, ACPNet
 from lib.utils.util import transform_point_cloud, npmat2euler
 import numpy as np
 from torch.utils.data import DataLoader
@@ -32,16 +32,21 @@ FRAME_ID = 2080
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Visualize in 3D')
-    parser.add_argument('--cfg', help='configuration file name', type=str, default='configs/default.yaml')
+    parser.add_argument('--arc', help='architecture name', choices=['dcp', 'prnet', 'apnet (not implemented)'], default='dcp')
+    args, _ = parser.parse_known_args()
+    parser.add_argument('--cfg', help='configuration file name', type=str, default=f'configs/{args.arc}/default.yaml')
     parser.add_argument('--exp_name',
                         help="Name of the experiment",
                         type=str,
-                        default=datetime.now().strftime("%m_%d-%H_%M_%S"))
+                        default=f"{args.arc}_{datetime.now().strftime('%m_%d-%H_%M_%S')}")
 
     args, _ = parser.parse_known_args()
     cfg = get_cfg_defaults()
     cfg.merge_from_file(args.cfg)
     cfg.freeze()
+    
+    print(args)
+
     return args, cfg
 
 
@@ -80,7 +85,7 @@ def _init_(args, cfg):
             pass
 
 
-def train(args, cfg, net, train_loader, test_loader, boardio, textio):
+def train_dcp(args, cfg, net, train_loader, test_loader, boardio, textio):
     if cfg.TRAINING.USE_SGD:
         print("Use SGD")
         opt = optim.SGD(
@@ -236,6 +241,42 @@ def train(args, cfg, net, train_loader, test_loader, boardio, textio):
             )
         gc.collect()
 
+def train_prnet(args, cfg, net, train_loader, test_loader, boardio):
+    if cfg.TRAINING.USE_SGD:
+        print("Use SGD")
+        opt = optim.SGD(
+            net.parameters(),
+            lr=cfg.TRAINING.LR * 100,
+            momentum=cfg.TRAINING.LR,
+            weight_decay=1e-4,
+        )
+    else:
+        print("Use Adam")
+        opt = optim.Adam(net.parameters(), lr=cfg.TRAINING.LR, weight_decay=1e-4)
+        
+    epoch_factor = cfg.TRAINING.EPOCHS / 100.0
+
+    scheduler = MultiStepLR(opt,
+                            milestones=[int(30*epoch_factor), int(60*epoch_factor), int(80*epoch_factor)],
+                            gamma=0.1)
+
+    info_test_best = None
+
+    for epoch in range(cfg.TRAINING.EPOCHS):
+        info_train = net._train_one_epoch(epoch=epoch, train_loader=train_loader, opt=opt, boardio=boardio)
+        info_test = net._test_one_epoch(epoch=epoch, test_loader=test_loader, boardio=boardio)
+        scheduler.step()
+
+        if info_test_best is None or info_test_best['loss'] > info_test['loss']:
+            info_test_best = info_test
+            info_test_best['stage'] = 'best_test'
+
+            net.save('checkpoints/%s/models/model.best.t7' % args.exp_name)
+        net.logger.write(info_test_best)
+
+        net.save('checkpoints/%s/models/model.%d.t7' % (args.exp_name, epoch))
+        gc.collect()
+
 
 def main():
     args, cfg = parse_args()
@@ -244,19 +285,13 @@ def main():
     torch.cuda.manual_seed_all(cfg.SEED)
     np.random.seed(cfg.SEED)
 
-    boardio = SummaryWriter(log_dir="checkpoints/" + args.exp_name)
-    _init_(args, cfg)
-
-    textio = IOStream("checkpoints/" + args.exp_name + "/run.log")
-    # textio.cprint(str(args))
-
     if cfg.TRAINING.OVERFIT:
         train_loader = DataLoader(
         SmplSynthetic(split='overfit',
                       num_output_points=cfg.TRAINING.NUM_POINTS,
                       transform=SMPLAugmentation(glasses_probability=0.5)),
         batch_size=cfg.TRAINING.BATCH_SIZE,
-        num_workers=8,
+        num_workers=os.cpu_count(),
         shuffle=True,
         drop_last=False,
     )
@@ -266,7 +301,7 @@ def main():
                         num_output_points=cfg.TRAINING.NUM_POINTS,
                         transform=SMPLAugmentation(glasses_probability=0.5)),
             batch_size=cfg.TRAINING.BATCH_SIZE,
-            num_workers=8,
+            num_workers=os.cpu_count(),
             shuffle=True,
             drop_last=True,
         )
@@ -275,15 +310,30 @@ def main():
                       num_output_points=cfg.TRAINING.NUM_POINTS,
                       transform=SMPLAugmentation(glasses_probability=0.5)),
         batch_size=cfg.TESTING.BATCH_SIZE,
-        num_workers=8,
+        num_workers=os.cpu_count(),
         shuffle=False,
         drop_last=False,
     )
+    
+    _init_(args, cfg)
+    
+    boardio = SummaryWriter(log_dir="checkpoints/" + args.exp_name)
+    textio = IOStream("checkpoints/" + args.exp_name + "/run.log")
+    
+    if args.arc == "dcp":
+        
+        # textio.cprint(str(args))
+        net = DCP(cfg).cuda()
 
-    net = DCP(cfg).cuda()
+        train_dcp(args, cfg, net, train_loader, test_loader, boardio, textio)
+        boardio.close()
 
-    train(args, cfg, net, train_loader, test_loader, boardio, textio)
-
+    elif args.arc == "prnet":
+        net = PRNet(cfg, args).cuda()
+        train_prnet(args, cfg, net, train_loader, test_loader, boardio)
+    else:
+        raise NotImplementedError()
+        
     print("FINISH")
     boardio.close()
 

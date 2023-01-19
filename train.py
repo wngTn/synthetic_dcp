@@ -149,20 +149,21 @@ def train_dcp(args, cfg, net, train_loader, test_loader, boardio, textio):
         boardio.add_scalar("A->B/train/translation/MAE", train_t_mae_ab, epoch)
 
         if not cfg.TRAINING.OVERFIT:
-            (
-                test_loss,
-                test_cycle_loss,
-                test_rotations_ab,
-                test_translations_ab,
-                test_rotations_ab_pred,
-                test_translations_ab_pred,
-                test_rotations_ba,
-                test_translations_ba,
-                test_rotations_ba_pred,
-                test_translations_ba_pred,
-                test_eulers_ab,
-                test_eulers_ba,
-            ) = one_epoch(cfg, net, test_loader, None, boardio, epoch, is_train=False)
+            with torch.no_grad():
+                (
+                    test_loss,
+                    test_cycle_loss,
+                    test_rotations_ab,
+                    test_translations_ab,
+                    test_rotations_ab_pred,
+                    test_translations_ab_pred,
+                    test_rotations_ba,
+                    test_translations_ba,
+                    test_rotations_ba_pred,
+                    test_translations_ba_pred,
+                    test_eulers_ab,
+                    test_eulers_ba,
+                ) = one_epoch(cfg, net, test_loader, None, boardio, epoch, is_train=False)
 
             test_rotations_ab_pred_euler = npmat2euler(test_rotations_ab_pred)
             test_r_mse_ab = np.mean((test_rotations_ab_pred_euler - np.degrees(test_eulers_ab))**2)
@@ -266,17 +267,18 @@ def train_prnet(args, cfg, net, train_loader, test_loader, boardio):
         _ = net._one_epoch(epoch=epoch, data_loader=train_loader, opt=opt, boardio=boardio, is_train = True)
         
         # this is absurd.... eval takes more memory than training as there are gradients computed regardless.... therefore deactivate it like this
-        with torch.no_grad():
-            info_test = net._one_epoch(epoch=epoch, data_loader=test_loader, boardio=boardio, is_train = False)
+        if not cfg.TRAINING.OVERFIT:
+            with torch.no_grad():
+                info_test = net._one_epoch(epoch=epoch, data_loader=test_loader, boardio=boardio, is_train = False)
         
         scheduler.step()
+        if not cfg.TRAINING.OVERFIT:
+            if info_test_best is None or info_test_best['loss'] > info_test['loss']:
+                info_test_best = info_test
+                info_test_best['stage'] = 'best_test'
 
-        if info_test_best is None or info_test_best['loss'] > info_test['loss']:
-            info_test_best = info_test
-            info_test_best['stage'] = 'best_test'
-
-            net.save('checkpoints/%s/models/model.best.t7' % args.exp_name)
-        net.logger.write(info_test_best)
+                net.save('checkpoints/%s/models/model.best.t7' % args.exp_name)
+            net.logger.write(info_test_best)
 
         net.save('checkpoints/%s/models/model.%d.t7' % (args.exp_name, epoch))
         gc.collect()
@@ -296,7 +298,6 @@ def main():
                       transform=SMPLAugmentation(glasses_probability=0.5)),
         batch_size=cfg.TRAINING.BATCH_SIZE,
         num_workers=os.cpu_count(),
-        shuffle=True,
         pin_memory=True,
         drop_last=False,
     )
@@ -307,7 +308,6 @@ def main():
                         transform=SMPLAugmentation(glasses_probability=0.5)),
             batch_size=cfg.TRAINING.BATCH_SIZE,
             num_workers=os.cpu_count(),
-            shuffle=True,
             pin_memory=True,
             drop_last=True,
         )
@@ -318,7 +318,6 @@ def main():
         batch_size=cfg.TESTING.BATCH_SIZE,
         num_workers=os.cpu_count(),
         pin_memory=True,
-        shuffle=False,
         drop_last=False,
     )
     

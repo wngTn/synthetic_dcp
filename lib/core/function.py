@@ -106,6 +106,8 @@ def one_epoch(cfg, net, data_loader, opt, boardio, epoch, is_train):
                 target.cpu().numpy(),
                 rotation_ab_pred.detach().cpu().numpy(),
                 translation_ab_pred.detach().cpu().numpy(),
+                rotation_ab.detach().cpu().numpy(),
+                translation_ab.detach().cpu().numpy(),
             )
             for jk, pcd in enumerate(pcds):
                 if not os.path.exists("output_debug"):

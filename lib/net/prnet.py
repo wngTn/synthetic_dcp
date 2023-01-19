@@ -374,7 +374,7 @@ class Transformer(nn.Module):
         super(Transformer, self).__init__()
         self.n_emb_dims = cfg.NET.EMB_DIMS
         self.N = cfg.NET.N_BLOCKS
-        self.dropout = cfg.NET.DROUPOUT
+        self.dropout = cfg.NET.DROPOUT
         self.n_ff_dims = cfg.NET.FF_DIMS
         self.n_heads = cfg.NET.N_HEADS
         c = copy.deepcopy
@@ -831,7 +831,7 @@ class PRNet(nn.Module):
             if is_train :
                 loss.backward()
                 # only compute gradient every 8 iteration
-                if it % 8 == 0 or it == len(data_loader):
+                if it % 16 == 0 or it == len(data_loader):
                     opt.step()
                     opt.zero_grad(set_to_none=True)
 
@@ -846,18 +846,20 @@ class PRNet(nn.Module):
             total_scale_consensus_loss += scale_consensus_loss * batch_size
             
 
-            rotations_ab.append(rotation_ab.detach().to("cpu", non_blocking=True).numpy())
-            translations_ab.append(translation_ab.detach().to("cpu", non_blocking=True).numpy())
-            rotations_ab_pred.append(rotation_ab_pred.detach().to("cpu", non_blocking=True).numpy())
-            translations_ab_pred.append(translation_ab_pred.detach().to("cpu", non_blocking=True).numpy())
+            rotations_ab.append(rotation_ab.detach().cpu().numpy())
+            translations_ab.append(translation_ab.detach().cpu().numpy())
+            rotations_ab_pred.append(rotation_ab_pred.detach().cpu().numpy())
+            translations_ab_pred.append(translation_ab_pred.detach().cpu().numpy())
             eulers_ab.append(data[-2]) # euler_ab
 
-            if it == len(data_loader) // 10:
+            if it == len(data_loader) // 25:
                 pcds = visualize_pred_transformation(
-                    source[:min(len(source), 10)].to("cpu", non_blocking=True).numpy(),
-                    target[:min(len(source), 10)].to("cpu", non_blocking=True).numpy(),
-                    rotation_ab_pred[:min(len(source), 10)].detach().to("cpu", non_blocking=True).numpy(),
-                    translation_ab_pred[:min(len(source), 10)].detach().to("cpu", non_blocking=True).numpy(),
+                    source[:min(len(source), 10)].detach().cpu().numpy(),
+                    target[:min(len(source), 10)].detach().cpu().numpy(),
+                    rotation_ab_pred[:min(len(source), 10)].detach().cpu().numpy(),
+                    translation_ab_pred[:min(len(source), 10)].detach().cpu().numpy(),
+                    rotation_ab[:min(len(source), 10)].detach().cpu().numpy(),
+                    translation_ab[:min(len(source), 10)].detach().cpu().numpy(),
                 )
                 for jk, pcd in enumerate(pcds):
                     if not os.path.exists("output_debug"):

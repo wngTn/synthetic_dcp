@@ -70,7 +70,7 @@ class SmplSynthetic(Dataset):
         return a pointcloud of the head randomly rotated and translated
         return the inverse rotation matrix and negative translation
         """
-
+        
         head_mesh = deepcopy(smpl_mesh)
         head_mesh.remove_vertices_by_index(list(set(range(6890)) - set(HEAD)))
 
@@ -95,34 +95,33 @@ class SmplSynthetic(Dataset):
         Rz = np.array([[cosz, -sinz, 0], [sinz, cosz, 0], [0, 0, 1]])
         R_ab = Rx.dot(Ry).dot(Rz)
         R_ba = R_ab.T
+        
+        # center at origin
+        head_center = head_mesh.get_center()
+        smpl_mesh.translate(-head_center)
+        head_mesh.translate(-head_center)
+        
+        # the target has to stay at 0 as this is the only thing we control both in testing and training
+        # if we translate the target head here we will have both target and source in testing at positions != origin
+        # if we keep it as is the target remains at origin in both
+        # therefore we need to augment the source to mimic translation we expect to see during testing
         translation_ab = np.array([
-            np.random.uniform(-0.25, 0.25),
-            np.random.uniform(-0.25, 0.25),
-            np.random.uniform(-0.25, 0.25),
+            np.random.uniform(-0.20, 0.20),
+            np.random.uniform(-0.20, 0.20),
+            np.random.uniform(-0.20, 0.20),
         ])
 
         if self.split == 'overfit':
-            translation_ab = np.array([0.1, 0.1, -0.25])
+            translation_ab = np.array([0.05, 0.05, -0.05])
         
         translation_ba = -R_ba.dot(translation_ab)
 
         euler_ab = np.asarray([anglez, angley, anglex])
         euler_ba = -euler_ab[::-1]
 
-        rotation_ab = R.from_euler("zyx", [anglez, angley, anglex])
-        head_mesh.vertices = o3d.utility.Vector3dVector(
-            (rotation_ab.apply(np.array(head_mesh.vertices)).T + np.expand_dims(translation_ab, axis=1)).T)
-
-        # rotate the pcd of the head and return the vectors to revert the augmentations (target for training later on)
-
         return head_mesh, R_ab, translation_ab, R_ba, translation_ba, euler_ab, euler_ba
 
     def __getitem__(self, item):
-
-        # we shouldn't randomize the dataloading here
-        # the torch dataloader introduces shuffeling on its own already
-        # e.g. len == 200 now actually means only choosing randomly from the first 200 and not 200 from all 90.000 poses
-        # this code rn is ugly but makes sure the test data is unseen
         if self.split == 'train':
             smpl_pose = self.smpl_poses[np.random.randint(self.test_len, self.smpl_poses_len)]
         elif self.split == 'overfit':
@@ -133,25 +132,18 @@ class SmplSynthetic(Dataset):
         poses = np.array([smpl_pose['pose_params']])
         shapes = np.array([smpl_pose['shape_params']])
         Rh = np.array([[1, -1, -1]])
-        
+
         with torch.no_grad():
             vertices = self.body_model(poses, shapes, Rh=Rh, Th=None, return_verts=True, return_tensor=False)[0]
-            
+
+
         rotation = R.from_euler("z", [np.random.uniform() * np.pi * 2])
         vertices = rotation.apply(vertices)
+
         # create the smpl mesh
         smpl_mesh = o3d.geometry.TriangleMesh()
         smpl_mesh.vertices = o3d.utility.Vector3dVector(vertices)
         smpl_mesh.triangles = o3d.utility.Vector3iVector(self.body_model.faces)
-
-        # get mesh of the smpl head
-        original_head_mesh = deepcopy(smpl_mesh)
-        original_head_mesh.remove_vertices_by_index(list(set(range(6890)) - set(HEAD)))
-
-        # translate mesh so that the head is in the center for rotation
-        head_center = original_head_mesh.get_center()
-        smpl_mesh.translate(-head_center)
-        original_head_mesh.translate(-head_center)
 
         # get the rotated head (problem) and the inverse rotation (solution) of the rigid registration problem
         transformed_head_mesh, R_ab, translation_ab, R_ba, translation_ba, euler_ab, euler_ba = self.get_mesh_source_and_rotation_target(
@@ -159,23 +151,26 @@ class SmplSynthetic(Dataset):
 
         # add accesouirs to model
         augmented_mesh = self.transform(smpl_mesh)
+        
+        # apply translation to source
+        # read in get_mesh_source_and_rotation_target why to do this
+        smpl_mesh.vertices = o3d.utility.Vector3dVector(np.array(smpl_mesh.vertices) @ R_ab + np.expand_dims(translation_ab, axis=1).T)
 
         # crop mesh with bounding box
         augmented_mesh = self.crop_mesh(augmented_mesh, transformed_head_mesh)
 
         # uniformly downsample the meshes so we can have the dimension the rigid registration requires
         augmented_pcd = augmented_mesh.sample_points_uniformly(number_of_points=self.augmented_mesh_output_points)
-        # augmented_pcd.points = o3d.utility.Vector3dVector(np.array(augmented_pcd.points)[np.random.choice(len(augmented_pcd.points), self.num_output_points)])
 
         transformed_head_pcd = transformed_head_mesh.sample_points_uniformly(number_of_points=self.num_output_points)
 
         # add some noise to more closely match natural noise of messurements
-        augmented_pcd = self.gaussian_noise(augmented_pcd, .04)
+        augmented_pcd = self.gaussian_noise(augmented_pcd, .02)
 
         pointcloud1 = np.random.permutation(np.array(augmented_pcd.points)).T
         pointcloud2 = np.random.permutation(np.array(transformed_head_pcd.points)).T
 
-        return pointcloud1.astype("float32"), pointcloud2.astype("float32"), R_ab.astype(
+        return pointcloud2.astype("float32"), pointcloud1.astype("float32"), R_ab.astype(
             "float32"), translation_ab.astype("float32"), R_ba.astype("float32"), translation_ba.astype(
                 "float32"), euler_ab.astype("float32"), euler_ba.astype("float32"),
 

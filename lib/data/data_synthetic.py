@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import torch
 
 from utils.util import unpack_poses, add_gear_to_smpl_mesh
-from utils.indices import HEAD
+from utils.indices import HEAD, HEAD_AUGMENTED
 from smplmodel.body_param import load_model
 
 PATH = Path("data") / "smpl_training_poses.pkl"
@@ -35,13 +35,14 @@ class SMPLAugmentation():
 
 class SmplSynthetic(Dataset):
 
-    def __init__(self, split, num_output_points=1024, transform=lambda x: x):
+    def __init__(self, split, num_output_points=1024, transform=lambda x: x, target_augmented = False):
         self.smpl_poses = unpack_poses(PATH)
         self.smpl_poses_len = len(self.smpl_poses)
         self.transform = transform
         self.num_output_points = num_output_points
         self.augmented_mesh_output_points = num_output_points
         self.factor = 4
+        self.target_augmented = target_augmented
         self.body_model = load_model(gender="neutral", model_path=Path("data").joinpath("smpl_models"))
         self.body_model.eval()
         
@@ -60,8 +61,8 @@ class SmplSynthetic(Dataset):
         bbox = o3d.geometry.AxisAlignedBoundingBox.create_from_points(mesh_head.vertices)
         bbox = bbox.scale(1.05, bbox.get_center())
 
-        bbox.max_bound = bbox.max_bound + np.array([0.2, 0.2, 0.2])
-        bbox.min_bound = bbox.min_bound - np.array([0.2, 0.2, 0.2])
+        bbox.max_bound = bbox.max_bound + np.array([0.05, 0.05, 0.05])
+        bbox.min_bound = bbox.min_bound - np.array([0.05, 0.05, 0.05])
 
         return mesh_full.crop(bbox)
 
@@ -71,8 +72,14 @@ class SmplSynthetic(Dataset):
         return the inverse rotation matrix and negative translation
         """
         
-        head_mesh = deepcopy(smpl_mesh)
-        head_mesh.remove_vertices_by_index(list(set(range(6890)) - set(HEAD)))
+        if self.target_augmented:
+
+            head_mesh = deepcopy(smpl_mesh)
+            # get augmented head without inner points and glasses
+            head_mesh = add_gear_to_smpl_mesh(head_mesh, True, True, True, True, False)
+        else:
+            head_mesh = deepcopy(smpl_mesh)
+            head_mesh.remove_vertices_by_index(list(set(range(6890)) - set(HEAD)))
 
         # get a random rotation matrix
         anglex = np.random.uniform() * np.pi / self.factor
@@ -106,9 +113,9 @@ class SmplSynthetic(Dataset):
         # if we keep it as is the target remains at origin in both
         # therefore we need to augment the source to mimic translation we expect to see during testing
         translation_ab = np.array([
-            np.random.uniform(-0.20, 0.20),
-            np.random.uniform(-0.20, 0.20),
-            np.random.uniform(-0.20, 0.20),
+            np.random.uniform(-0.05, 0.05),
+            np.random.uniform(-0.05, 0.05),
+            np.random.uniform(-0.05, 0.05),
         ])
 
         if self.split == 'overfit':
@@ -169,7 +176,10 @@ class SmplSynthetic(Dataset):
 
         pointcloud1 = np.random.permutation(np.array(augmented_pcd.points)).T
         pointcloud2 = np.random.permutation(np.array(transformed_head_pcd.points)).T
-
+        
+        # the switch of src and target is intentional
+        # it seems to improve performance if we use the 0 centered pcd (head) as source 
+        # TODO change it all together everywhere
         return pointcloud2.astype("float32"), pointcloud1.astype("float32"), R_ab.astype(
             "float32"), translation_ab.astype("float32"), R_ba.astype("float32"), translation_ba.astype(
                 "float32"), euler_ab.astype("float32"), euler_ba.astype("float32"),

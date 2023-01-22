@@ -9,10 +9,10 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import MultiStepLR
 
 import __init_paths__
-from core.function import one_epoch
-from data.data_synthetic import SmplSynthetic, SMPLAugmentation
+from lib.core.function_dcp import one_epoch, evaluate_real_data
+from lib.data.data_synthetic import SmplSynthetic, SMPLAugmentation
 from lib.net.dcp import DCP
-from lib.net.prnet import PRNet, ACPNet
+from lib.net.prnet import PRNet
 from lib.utils.util import transform_point_cloud, npmat2euler
 import numpy as np
 from torch.utils.data import DataLoader
@@ -25,14 +25,14 @@ from datetime import datetime
 from lib.utils.indices import HEAD
 import numpy as np
 import argparse
-from core.configs import get_cfg_defaults
+from lib.core.configs import get_cfg_defaults
 
 FRAME_ID = 2080
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Visualize in 3D')
-    parser.add_argument('--arc', help='architecture name', choices=['dcp', 'prnet', 'apnet (not implemented)'], default='dcp')
+    parser.add_argument('--arc', help='architecture name', choices=['dcp', 'prnet'], default='dcp')
     args, _ = parser.parse_known_args()
     parser.add_argument('--cfg', help='configuration file name', type=str, default=f'configs/{args.arc}/default.yaml')
     parser.add_argument('--exp_name',
@@ -97,7 +97,7 @@ def train_dcp(args, cfg, net, train_loader, test_loader, boardio, textio):
     else:
         print("Use Adam")
         opt = optim.Adam(net.parameters(), lr=cfg.TRAINING.LR, weight_decay=1e-4)
-    scheduler = MultiStepLR(opt, milestones=[75, 150, 200], gamma=0.1)
+    scheduler = MultiStepLR(opt, milestones=[10, 20, 30], gamma=0.1)
 
     best_test_loss = np.inf
 
@@ -270,7 +270,8 @@ def train_prnet(args, cfg, net, train_loader, test_loader, boardio):
         if not cfg.TRAINING.OVERFIT:
             with torch.no_grad():
                 info_test = net._one_epoch(epoch=epoch, data_loader=test_loader, boardio=boardio, is_train = False)
-        
+                evaluate_real_data(net)
+
         scheduler.step()
         if not cfg.TRAINING.OVERFIT:
             if info_test_best is None or info_test_best['loss'] > info_test['loss']:
@@ -295,7 +296,8 @@ def main():
         train_loader = DataLoader(
         SmplSynthetic(split='overfit',
                       num_output_points=cfg.TRAINING.NUM_POINTS,
-                      transform=SMPLAugmentation(glasses_probability=0.5)),
+                      transform=SMPLAugmentation(glasses_probability=0.5),
+                      target_augmented = True),
         batch_size=cfg.TRAINING.BATCH_SIZE,
         num_workers=os.cpu_count(),
         pin_memory=True,
@@ -305,7 +307,8 @@ def main():
         train_loader = DataLoader(
             SmplSynthetic(split='train',
                         num_output_points=cfg.TRAINING.NUM_POINTS,
-                        transform=SMPLAugmentation(glasses_probability=0.5)),
+                        transform=SMPLAugmentation(glasses_probability=0.5),
+                        target_augmented = True),
             batch_size=cfg.TRAINING.BATCH_SIZE,
             num_workers=os.cpu_count(),
             pin_memory=True,
@@ -314,7 +317,8 @@ def main():
     test_loader = DataLoader(
         SmplSynthetic(split='test',
                       num_output_points=cfg.TRAINING.NUM_POINTS,
-                      transform=SMPLAugmentation(glasses_probability=0.5)),
+                      transform=SMPLAugmentation(glasses_probability=0.5),
+                      target_augmented = True),
         batch_size=cfg.TESTING.BATCH_SIZE,
         num_workers=os.cpu_count(),
         pin_memory=True,
@@ -328,11 +332,9 @@ def main():
     
     if args.arc == "dcp":
         
-        # textio.cprint(str(args))
         net = DCP(cfg).cuda()
-
+        # net.load_state_dict(torch.load("./pretrained/dcp_v2.t7"), strict=False)
         train_dcp(args, cfg, net, train_loader, test_loader, boardio, textio)
-        boardio.close()
 
     elif args.arc == "prnet":
         net = PRNet(cfg, args).cuda()

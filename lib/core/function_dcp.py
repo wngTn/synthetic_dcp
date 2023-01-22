@@ -7,6 +7,42 @@ import os
 
 from utils.util import transform_point_cloud, npmat2euler
 from utils.vis import visualize_transformation, visualize_pred_transformation
+from data.test_data import TestData
+
+def evaluate_real_data(net):    
+    dataset = TestData(target_augmented = True)
+    
+    i = 0
+    k = 0
+    while i < 25:
+        if len(dataset[k]["source"]) != 0:
+            # the switch of src and target is intentional
+            # it seems to improve performance if we use the 0 centered pcd (head) as source 
+            # TODO change it all together everywhere
+            target = torch.from_numpy(dataset[k]["source"][0][None, :]).cuda()
+            source = torch.from_numpy(dataset[k]["target"][0][None, :]).cuda()
+            (
+                rotation_ab_pred,
+                translation_ab_pred,
+                rotation_ba_pred,
+                translation_ba_pred,
+            ) = net(source, target)
+
+            pcds = visualize_pred_transformation(
+                source.cpu().numpy(),
+                target.cpu().numpy(),
+                rotation_ab_pred.detach().cpu().numpy(),
+                translation_ab_pred.detach().cpu().numpy(),
+                rotation_ab_pred.detach().cpu().numpy(),
+                translation_ab_pred.detach().cpu().numpy(),
+            )
+            
+            for pcd in pcds:
+                if not os.path.exists("output_debug"):
+                    os.mkdir("output_debug")
+                o3d.io.write_point_cloud(os.path.join("output_debug", f"real_pointclouds_{i}.ply"), pcd)
+            i+=1
+        k += 1
 
 
 def one_epoch(cfg, net, data_loader, opt, boardio, epoch, is_train):
@@ -15,6 +51,8 @@ def one_epoch(cfg, net, data_loader, opt, boardio, epoch, is_train):
         net.train()
     else:
         net.eval()
+        evaluate_real_data(net)
+
 
     total_loss = 0
     total_cycle_loss = 0
@@ -35,7 +73,7 @@ def one_epoch(cfg, net, data_loader, opt, boardio, epoch, is_train):
     for it, data in tqdm(enumerate(data_loader), total=len(data_loader)):
         data = [d.cuda() for d in data]
         src, target, rotation_ab, translation_ab, rotation_ba, translation_ba, euler_ab, euler_ba = data
-
+        
         batch_size = src.size(0)
         if is_train:
             opt.zero_grad()
@@ -114,7 +152,9 @@ def one_epoch(cfg, net, data_loader, opt, boardio, epoch, is_train):
                     os.mkdir("output_debug")
                     
                 o3d.io.write_point_cloud(os.path.join("output_debug", f"pointclouds_{jk}.ply"), pcd)
-
+                
+            
+            
     rotations_ab = np.concatenate(rotations_ab, axis=0)
     translations_ab = np.concatenate(translations_ab, axis=0)
     rotations_ab_pred = np.concatenate(rotations_ab_pred, axis=0)

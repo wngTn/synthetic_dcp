@@ -17,7 +17,7 @@ from smplmodel.body_param import load_model
 
 class TestData(Dataset):
 
-    def __init__(self, num_output_points=1024, voxel_size=0.002):
+    def __init__(self, num_output_points=1024, voxel_size=0.002, target_augmented = False):
         self.num_output_points = num_output_points
 
         self.path_to_trial = Path("data") / "trial"
@@ -25,6 +25,7 @@ class TestData(Dataset):
         self.voxel_size = voxel_size
         self.data = self.get_frames()
         self.len = len(self.data)
+        self.target_augmented = target_augmented
 
     def __getitem__(self, index):
         frame = self.data[index]
@@ -43,8 +44,13 @@ class TestData(Dataset):
         }
 
         for mesh in meshes:
-            head_mesh = copy.deepcopy(mesh)
-            head_mesh.remove_vertices_by_index(list(set(range(6890)) - set(HEAD)))
+            if self.target_augmented:
+                head_mesh = deepcopy(mesh)
+                # get augmented head without inner points and glasses
+                head_mesh = add_gear_to_smpl_mesh(head_mesh, True, True, True, True, False)
+            else:
+                head_mesh = deepcopy(mesh)
+                head_mesh.remove_vertices_by_index(list(set(range(6890)) - set(HEAD)))
 
             head_mesh_center = head_mesh.get_center()
             head_mesh.translate(-head_mesh_center)
@@ -66,6 +72,7 @@ class TestData(Dataset):
             pcd_head.translate(-head_mesh_center)
             pcd_head = pcd_head.crop(bbox)
             pcd_head = pcd_head.voxel_down_sample(self.voxel_size)
+            
             pcd_head_np = np.array(pcd_head.points)[np.random.choice(len(pcd_head.points), 1024)]
 
             item_data["source"].append(pcd_head_np.T.astype("float32"))

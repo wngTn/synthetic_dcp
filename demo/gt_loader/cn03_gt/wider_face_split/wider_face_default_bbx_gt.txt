@@ -1,0 +1,369 @@
+no_label/0000001000_color.jpg
+no_label/0000001010_color.jpg
+1
+1460.64 94.93 133.63999999999987 153.82999999999998 - - - False - - Face
+no_label/0000001020_color.jpg
+1
+1528.34 86.6 138.56000000000017 153.83 - - - False - - Face
+no_label/0000001030_color.jpg
+1
+1592.09 84.3 152.01 160.56 - - - False - - Face
+no_label/0000001040_color.jpg
+1
+1645.19 92.7 156.6099999999999 158.05 - - - False - - Face
+no_label/0000001050_color.jpg
+1
+1682.98 116.8 150.31999999999994 151.70999999999998 - - - False - - Face
+no_label/0000001060_color.jpg
+1
+1715.32 125.9 152.48000000000002 148.23 - - - False - - Face
+no_label/0000001070_color.jpg
+1
+1772.47 95.7 153.43000000000006 149.38 - - - False - - Face
+no_label/0000001080_color.jpg
+1
+1816.82 72.6 176.18000000000006 155.76000000000002 - - - False - - Face
+no_label/0000001090_color.jpg
+1
+1841.64 67.4 164.9599999999998 143.34 - - - False - - Face
+no_label/0000001100_color.jpg
+1
+1850.91 77.6 158.58999999999992 147.38 - - - False - - Face
+no_label/0000001110_color.jpg
+1
+1845.51 102.7 147.69000000000005 146.62 - - - False - - Face
+no_label/0000001120_color.jpg
+1
+1820.82 135.2 146.98000000000002 141.64 - - - False - - Face
+no_label/0000001130_color.jpg
+1
+1847.71 112.1 151.08999999999992 153.22 - - - False - - Face
+no_label/0000001140_color.jpg
+1
+1867.49 138.9 161.30999999999995 146.14000000000001 - - - False - - Face
+no_label/0000001150_color.jpg
+1
+1874.33 139.6 144.07000000000016 148.13000000000002 - - - False - - Face
+no_label/0000001160_color.jpg
+1
+1874.55 134.4 152.35000000000014 144.6 - - - False - - Face
+no_label/0000001170_color.jpg
+1
+1853.9 134.2 140.89999999999986 141.81 - - - False - - Face
+no_label/0000001180_color.jpg
+1
+1831.14 154.3 158.55999999999995 142.2 - - - False - - Face
+no_label/0000001190_color.jpg
+1
+1843.56 147.6 150.44000000000005 150.89000000000001 - - - False - - Face
+no_label/0000001200_color.jpg
+1
+1849.2 120.9 160.29999999999995 173.54999999999998 - - - False - - Face
+no_label/0000001210_color.jpg
+1
+1844.65 134.02 174.8499999999999 170.67999999999998 - - - False - - Face
+no_label/0000001220_color.jpg
+1
+1935.9 279.4 112.09999999999991 167.18 - - - False - - Face
+no_label/0000001230_color.jpg
+no_label/0000001240_color.jpg
+no_label/0000001250_color.jpg
+no_label/0000001260_color.jpg
+no_label/0000001270_color.jpg
+no_label/0000001280_color.jpg
+no_label/0000001290_color.jpg
+no_label/0000001300_color.jpg
+no_label/0000001310_color.jpg
+no_label/0000001320_color.jpg
+no_label/0000001330_color.jpg
+no_label/0000001340_color.jpg
+no_label/0000001350_color.jpg
+no_label/0000001360_color.jpg
+no_label/0000001370_color.jpg
+no_label/0000001380_color.jpg
+no_label/0000001390_color.jpg
+no_label/0000001400_color.jpg
+no_label/0000001410_color.jpg
+no_label/0000001420_color.jpg
+no_label/0000001430_color.jpg
+no_label/0000001440_color.jpg
+no_label/0000001450_color.jpg
+no_label/0000001460_color.jpg
+no_label/0000001470_color.jpg
+no_label/0000001480_color.jpg
+no_label/0000001490_color.jpg
+no_label/0000001500_color.jpg
+no_label/0000001510_color.jpg
+no_label/0000001520_color.jpg
+no_label/0000001530_color.jpg
+no_label/0000001540_color.jpg
+no_label/0000001550_color.jpg
+no_label/0000001560_color.jpg
+no_label/0000001570_color.jpg
+no_label/0000001580_color.jpg
+no_label/0000001590_color.jpg
+no_label/0000001600_color.jpg
+no_label/0000001610_color.jpg
+no_label/0000001620_color.jpg
+no_label/0000001630_color.jpg
+no_label/0000001640_color.jpg
+no_label/0000001650_color.jpg
+no_label/0000001660_color.jpg
+no_label/0000001670_color.jpg
+no_label/0000001680_color.jpg
+no_label/0000001690_color.jpg
+no_label/0000001700_color.jpg
+no_label/0000001710_color.jpg
+no_label/0000001720_color.jpg
+1
+629.4 935.9 61.0 123.80000000000007 - - - False - - Face
+no_label/0000001730_color.jpg
+1
+408.6 843.03 123.13 175.76999999999998 - - - False - - Face
+no_label/0000001740_color.jpg
+1
+227.9 777.94 150.45000000000002 183.8599999999999 - - - False - - Face
+no_label/0000001750_color.jpg
+1
+12.51 714.99 247.89 195.40999999999997 - - - False - - Face
+no_label/0000001760_color.jpg
+1
+0.04 687.97 185.66 197.42999999999995 - - - False - - Face
+no_label/0000001770_color.jpg
+no_label/0000001780_color.jpg
+no_label/0000001790_color.jpg
+1
+1655.3 545.3 112.79999999999995 115.60000000000002 - - - False - - Face
+no_label/0000001800_color.jpg
+1
+1642.2 533.0 109.5 120.75999999999999 - - - False - - Face
+no_label/0000001810_color.jpg
+1
+1636.86 527.34 92.74000000000001 106.69999999999993 - - - False - - Face
+no_label/0000001820_color.jpg
+1
+1623.67 504.6 98.52999999999997 118.72000000000003 - - - False - - Face
+no_label/0000001830_color.jpg
+1
+1618.24 464.9 101.46000000000004 137.73000000000002 - - - False - - Face
+no_label/0000001840_color.jpg
+1
+1606.0 461.3 87.5 134.81 - - - False - - Face
+no_label/0000001850_color.jpg
+2
+0.0 240.2 97.2 149.8 - - - False - - Face
+1593.0 476.4 73.92000000000007 125.24000000000001 - - - False - - Face
+no_label/0000001860_color.jpg
+2
+52.6 262.6 112.5 128.77999999999997 - - - False - - Face
+1601.2 468.7 76.78999999999996 131.08999999999997 - - - False - - Face
+no_label/0000001870_color.jpg
+2
+79.82 275.3 91.48000000000002 126.72999999999996 - - - False - - Face
+1589.9 465.4 80.77999999999997 129.67000000000007 - - - False - - Face
+no_label/0000001880_color.jpg
+2
+3.55 254.3 111.55 144.78999999999996 - - - False - - Face
+1583.1 451.9 98.30000000000018 137.45000000000005 - - - False - - Face
+no_label/0000001890_color.jpg
+1
+1581.69 453.3 104.6099999999999 136.82999999999998 - - - False - - Face
+no_label/0000001900_color.jpg
+1
+1601.66 451.5 113.63999999999987 138.97000000000003 - - - False - - Face
+no_label/0000001910_color.jpg
+1
+1666.4 429.6 124.69999999999982 144.26999999999998 - - - False - - Face
+no_label/0000001920_color.jpg
+1
+1786.7 368.3 151.5 161.79000000000002 - - - False - - Face
+no_label/0000001930_color.jpg
+1
+1842.14 376.4 87.45999999999981 160.87 - - - False - - Face
+no_label/0000001940_color.jpg
+1
+1853.9 336.6 81.39999999999986 147.27999999999997 - - - False - - Face
+no_label/0000001950_color.jpg
+1
+1830.81 256.7 152.78999999999996 119.44 - - - False - - Face
+no_label/0000001960_color.jpg
+1
+1827.49 181.1 154.01 138.46 - - - False - - Face
+no_label/0000001970_color.jpg
+1
+1803.9 182.7 154.5 135.10000000000002 - - - False - - Face
+no_label/0000001980_color.jpg
+1
+1777.09 192.7 160.61000000000013 125.12 - - - False - - Face
+no_label/0000001990_color.jpg
+1
+1765.26 209.9 146.83999999999992 108.09 - - - False - - Face
+no_label/0000002000_color.jpg
+1
+1758.98 208.7 150.42000000000007 115.41000000000003 - - - False - - Face
+no_label/0000002010_color.jpg
+1
+1764.41 204.8 148.78999999999996 112.94999999999999 - - - False - - Face
+no_label/0000002020_color.jpg
+1
+1770.51 201.13 146.69000000000005 109.57 - - - False - - Face
+no_label/0000002030_color.jpg
+1
+1769.87 203.6 146.1300000000001 105.35999999999999 - - - False - - Face
+no_label/0000002040_color.jpg
+1
+1775.85 195.7 147.55000000000018 115.15000000000003 - - - False - - Face
+no_label/0000002050_color.jpg
+1
+1778.65 186.7 140.6099999999999 120.77000000000004 - - - False - - Face
+no_label/0000002060_color.jpg
+1
+1789.9 169.8 146.5 133.11 - - - False - - Face
+no_label/0000002070_color.jpg
+1
+1805.98 169.5 156.72000000000003 132.49 - - - False - - Face
+no_label/0000002080_color.jpg
+1
+1807.55 167.5 148.95000000000005 125.88 - - - False - - Face
+no_label/0000002090_color.jpg
+1
+1834.72 156.1 151.07999999999993 126.97 - - - False - - Face
+no_label/0000002100_color.jpg
+1
+1846.15 135.6 150.3499999999999 147.81000000000003 - - - False - - Face
+no_label/0000002110_color.jpg
+1
+1900.6 252.63 147.4000000000001 137.47000000000003 - - - False - - Face
+no_label/0000002120_color.jpg
+2
+1.03 49.9 90.37 115.4 - - - False - - Face
+1944.1 459.37 103.90000000000009 142.92999999999995 - - - False - - Face
+no_label/0000002130_color.jpg
+2
+1892.31 678.67 110.3900000000001 130.63 - - - False - - Face
+162.67 0.0 66.53 120.5 - - - False - - Face
+no_label/0000002140_color.jpg
+1
+294.28 0.0 40.32000000000005 64.5 - - - False - - Face
+no_label/0000002150_color.jpg
+no_label/0000002160_color.jpg
+no_label/0000002170_color.jpg
+no_label/0000002180_color.jpg
+no_label/0000002190_color.jpg
+no_label/0000002200_color.jpg
+no_label/0000002210_color.jpg
+no_label/0000002220_color.jpg
+no_label/0000002230_color.jpg
+no_label/0000002240_color.jpg
+no_label/0000002250_color.jpg
+no_label/0000002260_color.jpg
+no_label/0000002270_color.jpg
+no_label/0000002280_color.jpg
+no_label/0000002290_color.jpg
+no_label/0000002300_color.jpg
+no_label/0000002310_color.jpg
+no_label/0000002320_color.jpg
+no_label/0000002330_color.jpg
+no_label/0000002340_color.jpg
+no_label/0000002350_color.jpg
+1
+1457.52 1130.0 140.61000000000013 165.79999999999995 - - - False - - Face
+no_label/0000002360_color.jpg
+1
+1447.34 1287.3 140.61000000000013 177.29999999999995 - - - False - - Face
+no_label/0000002370_color.jpg
+no_label/0000002380_color.jpg
+no_label/0000002390_color.jpg
+no_label/0000002400_color.jpg
+no_label/0000002410_color.jpg
+1
+615.91 0.0 84.19000000000005 66.43 - - - False - - Face
+no_label/0000002420_color.jpg
+1
+577.2 0.0 71.33999999999992 85.67 - - - False - - Face
+no_label/0000002430_color.jpg
+no_label/0000002440_color.jpg
+no_label/0000002450_color.jpg
+no_label/0000002460_color.jpg
+no_label/0000002470_color.jpg
+no_label/0000002480_color.jpg
+1
+406.66 43.2 89.83999999999997 146.83999999999997 - - - False - - Face
+no_label/0000002490_color.jpg
+1
+300.07 51.08 118.93 153.51999999999998 - - - False - - Face
+no_label/0000002500_color.jpg
+1
+198.15 43.8 121.74999999999997 152.60000000000002 - - - False - - Face
+no_label/0000002510_color.jpg
+1
+179.23 36.37 137.67 156.03 - - - False - - Face
+no_label/0000002520_color.jpg
+1
+194.52 26.19 131.87999999999997 164.11 - - - False - - Face
+no_label/0000002530_color.jpg
+1
+187.3 35.21 126.59999999999997 147.79 - - - False - - Face
+no_label/0000002540_color.jpg
+1
+153.9 32.83 131.6 144.76999999999998 - - - False - - Face
+no_label/0000002550_color.jpg
+1
+110.4 35.43 142.6 133.76999999999998 - - - False - - Face
+no_label/0000002560_color.jpg
+1
+101.48 28.34 140.61 140.16 - - - False - - Face
+no_label/0000002570_color.jpg
+1
+98.24 15.29 144.76 141.81 - - - False - - Face
+no_label/0000002580_color.jpg
+1
+104.8 0.26 141.39999999999998 129.24 - - - False - - Face
+no_label/0000002590_color.jpg
+1
+97.6 0.0 132.4 123.6 - - - False - - Face
+no_label/0000002600_color.jpg
+1
+11.38 0.0 146.92000000000002 122.9 - - - False - - Face
+no_label/0000002610_color.jpg
+1
+0.0 20.94 31.78 106.7 - - - False - - Face
+no_label/0000002620_color.jpg
+no_label/0000002630_color.jpg
+no_label/0000002640_color.jpg
+no_label/0000002650_color.jpg
+no_label/0000002660_color.jpg
+no_label/0000002670_color.jpg
+no_label/0000002680_color.jpg
+no_label/0000002690_color.jpg
+no_label/0000002700_color.jpg
+no_label/0000002710_color.jpg
+no_label/0000002720_color.jpg
+no_label/0000002730_color.jpg
+no_label/0000002740_color.jpg
+no_label/0000002750_color.jpg
+no_label/0000002760_color.jpg
+no_label/0000002770_color.jpg
+no_label/0000002780_color.jpg
+no_label/0000002790_color.jpg
+no_label/0000002800_color.jpg
+no_label/0000002810_color.jpg
+no_label/0000002820_color.jpg
+no_label/0000002830_color.jpg
+no_label/0000002840_color.jpg
+no_label/0000002850_color.jpg
+no_label/0000002860_color.jpg
+no_label/0000002870_color.jpg
+no_label/0000002880_color.jpg
+no_label/0000002890_color.jpg
+no_label/0000002900_color.jpg
+no_label/0000002910_color.jpg
+no_label/0000002920_color.jpg
+no_label/0000002930_color.jpg
+no_label/0000002940_color.jpg
+no_label/0000002950_color.jpg
+no_label/0000002960_color.jpg
+no_label/0000002970_color.jpg
+no_label/0000002980_color.jpg
+no_label/0000002990_color.jpg
+no_label/0000003000_color.jpg

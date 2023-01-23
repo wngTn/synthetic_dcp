@@ -8,4 +8,5 @@ scipy==1.9.3
 tensorboardX==2.5.1
 torch==1.13.1
 tqdm==4.64.1
+yacs==0.1.8
 imageio

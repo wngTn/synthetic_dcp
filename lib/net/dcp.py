@@ -299,6 +299,14 @@ class DGCNN(nn.Module):
         self.bn4 = nn.BatchNorm2d(256)
         self.bn5 = nn.BatchNorm2d(emb_dims)
 
+        self.linear1 = nn.Linear(emb_dims*2, 512, bias=False)
+        self.bn6 = nn.BatchNorm1d(512)
+        self.dp1 = nn.Dropout(p=0.0)
+        self.linear2 = nn.Linear(512, 512)
+        self.bn7 = nn.BatchNorm1d(512)
+        self.dp2 = nn.Dropout(0.0)
+        self.linear3 = nn.Linear(512, emb_dims)
+
     def forward(self, x):
         batch_size, num_dims, num_points = x.size()
         x = get_graph_feature(x)
@@ -316,7 +324,19 @@ class DGCNN(nn.Module):
 
         x = torch.cat((x1, x2, x3, x4), dim=1)
 
-        x = F.relu(self.bn5(self.conv5(x))).view(batch_size, -1, num_points)
+        x = F.relu(self.bn5(self.conv5(x)))
+        # 1024 point 512 feature dimension
+        # B X 512
+        x1 = F.adaptive_max_pool1d(x.squeeze(), 1).view(batch_size, -1)
+        x2 = F.adaptive_avg_pool1d(x.squeeze(), 1).view(batch_size, -1)
+        x = torch.cat((x1, x2), 1)
+
+        x = F.leaky_relu(self.bn6(self.linear1(x)), negative_slope=0.2)
+        x = self.dp1(x)
+        x = F.leaky_relu(self.bn7(self.linear2(x)), negative_slope=0.2)
+        x = self.dp2(x)
+        x = self.linear3(x)
+
         return x
 
 
@@ -343,7 +363,8 @@ class MLPHead(nn.Module):
         src_embedding = input[0]
         tgt_embedding = input[1]
         embedding = torch.cat((src_embedding, tgt_embedding), dim=1)
-        embedding = self.nn(embedding.max(dim=-1)[0])
+        # embedding = self.nn(embedding.max(dim=-1)[0])
+        embedding = self.nn(embedding)
         rotation = self.proj_rot(embedding)
         rotation = rotation / torch.norm(rotation, p=2, dim=1, keepdim=True)
         translation = self.proj_trans(embedding)

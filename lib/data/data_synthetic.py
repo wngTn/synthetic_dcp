@@ -6,6 +6,7 @@ from scipy.spatial.transform import Rotation as R
 import open3d as o3d
 from copy import deepcopy
 import matplotlib.pyplot as plt
+import torch
 
 from utils.util import unpack_poses, add_gear_to_smpl_mesh
 from utils.indices import HEAD
@@ -39,8 +40,10 @@ class SmplSynthetic(Dataset):
         self.smpl_poses_len = len(self.smpl_poses)
         self.transform = transform
         self.num_output_points = num_output_points
+        self.augmented_mesh_output_points = num_output_points
         self.factor = 4
         self.body_model = load_model(gender="neutral", model_path=Path("data").joinpath("smpl_models"))
+        self.body_model.eval()
         
         # choose dims of dataset
         self.test_len = 250
@@ -48,7 +51,7 @@ class SmplSynthetic(Dataset):
         self.split = split
 
     def gaussian_noise(self, pcd, variance):
-        noise = 1 + np.random.normal(0, variance, self.num_output_points * 3).reshape((-1, 3))
+        noise = 1 + np.random.normal(0, variance, self.augmented_mesh_output_points * 3).reshape((-1, 3))
         pcd.points = o3d.utility.Vector3dVector(noise * np.array(pcd.points))
         return pcd
 
@@ -99,7 +102,7 @@ class SmplSynthetic(Dataset):
         ])
 
         if self.split == 'overfit':
-            translation_ab = np.array([0.15, 0.15, -0.15])
+            translation_ab = np.array([0.1, 0.1, -0.25])
         
         translation_ba = -R_ba.dot(translation_ab)
 
@@ -130,7 +133,12 @@ class SmplSynthetic(Dataset):
         poses = np.array([smpl_pose['pose_params']])
         shapes = np.array([smpl_pose['shape_params']])
         Rh = np.array([[1, -1, -1]])
-        vertices = self.body_model(poses, shapes, Rh=Rh, Th=None, return_verts=True, return_tensor=False)[0]
+        
+        with torch.no_grad():
+            vertices = self.body_model(poses, shapes, Rh=Rh, Th=None, return_verts=True, return_tensor=False)[0]
+            
+        rotation = R.from_euler("z", [np.random.uniform() * np.pi * 2])
+        vertices = rotation.apply(vertices)
         # create the smpl mesh
         smpl_mesh = o3d.geometry.TriangleMesh()
         smpl_mesh.vertices = o3d.utility.Vector3dVector(vertices)
@@ -145,7 +153,7 @@ class SmplSynthetic(Dataset):
         smpl_mesh.translate(-head_center)
         original_head_mesh.translate(-head_center)
 
-        # get the rotated head (problem) and the inverse rotation (solution) of the rigid regestration problem
+        # get the rotated head (problem) and the inverse rotation (solution) of the rigid registration problem
         transformed_head_mesh, R_ab, translation_ab, R_ba, translation_ba, euler_ab, euler_ba = self.get_mesh_source_and_rotation_target(
             smpl_mesh)
 
@@ -155,8 +163,8 @@ class SmplSynthetic(Dataset):
         # crop mesh with bounding box
         augmented_mesh = self.crop_mesh(augmented_mesh, transformed_head_mesh)
 
-        # uniformly downsample the meshes so we can have the dimension the rigid regestration requires
-        augmented_pcd = augmented_mesh.sample_points_uniformly(number_of_points=self.num_output_points)
+        # uniformly downsample the meshes so we can have the dimension the rigid registration requires
+        augmented_pcd = augmented_mesh.sample_points_uniformly(number_of_points=self.augmented_mesh_output_points)
         # augmented_pcd.points = o3d.utility.Vector3dVector(np.array(augmented_pcd.points)[np.random.choice(len(augmented_pcd.points), self.num_output_points)])
 
         transformed_head_pcd = transformed_head_mesh.sample_points_uniformly(number_of_points=self.num_output_points)

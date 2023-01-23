@@ -98,8 +98,8 @@ def visualize_pred_transformation(src, target, rotation_ab, translation_ab):
         _translation_ab = translation_ab[i]
         pcd = o3d.geometry.PointCloud()
 
-        points = np.concatenate((_src.T, _target.T, (_target.T - _translation_ab) @ _rotation_ab ), axis=0)
-        colors = np.concatenate((np.repeat([[1, 1, 1]], 1024, axis=0), np.repeat([[1, 0, 0]], 1024, axis=0),  np.repeat([[0, 0, 1]], 1024, axis=0)))
+        points = np.concatenate((_src.T, _target.T, (_target.T - _translation_ab) @ _rotation_ab), axis=0)
+        colors = np.concatenate((np.repeat([[1, 1, 1]], _src.shape[1], axis=0), np.repeat([[1, 0, 0]], _target.shape[1], axis=0),  np.repeat([[0, 0, 1]], _target.shape[1], axis=0)))
 
         pcd.points = o3d.utility.Vector3dVector(points)
         pcd.colors = o3d.utility.Vector3dVector(colors)

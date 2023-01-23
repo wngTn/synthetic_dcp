@@ -32,27 +32,15 @@ def one_epoch(cfg, net, data_loader, opt, boardio, epoch, is_train):
     eulers_ab = []
     eulers_ba = []
 
-    for it, (
-            src,
-            target,
-            rotation_ab,
-            translation_ab,
-            rotation_ba,
-            translation_ba,
-            euler_ab,
-            euler_ba,
-    ) in tqdm(enumerate(data_loader), total=len(data_loader)):
-        src = src.cuda()
-        target = target.cuda()
-        rotation_ab = rotation_ab.cuda()
-        translation_ab = translation_ab.cuda()
-        rotation_ba = rotation_ba.cuda()
-        translation_ba = translation_ba.cuda()
+    for it, data in tqdm(enumerate(data_loader), total=len(data_loader)):
+        data = [d.cuda() for d in data]
+        src, target, rotation_ab, translation_ab, rotation_ba, translation_ba, euler_ab, euler_ba = data
 
         batch_size = src.size(0)
         if is_train:
             opt.zero_grad()
         num_examples += batch_size
+        
         (
             rotation_ab_pred,
             translation_ab_pred,
@@ -65,21 +53,19 @@ def one_epoch(cfg, net, data_loader, opt, boardio, epoch, is_train):
         translations_ab.append(translation_ab.detach().cpu().numpy())
         rotations_ab_pred.append(rotation_ab_pred.detach().cpu().numpy())
         translations_ab_pred.append(translation_ab_pred.detach().cpu().numpy())
-        eulers_ab.append(euler_ab.numpy())
+        eulers_ab.append(euler_ab.cpu().numpy())
         ##
         rotations_ba.append(rotation_ba.detach().cpu().numpy())
         translations_ba.append(translation_ba.detach().cpu().numpy())
         rotations_ba_pred.append(rotation_ba_pred.detach().cpu().numpy())
         translations_ba_pred.append(translation_ba_pred.detach().cpu().numpy())
-        eulers_ba.append(euler_ba.numpy())
+        eulers_ba.append(euler_ba.cpu().numpy())
 
-        # transformed_src = transform_point_cloud(src, rotation_ab_pred, translation_ab_pred)
-
-        # transformed_target = transform_point_cloud(target, rotation_ba_pred, translation_ba_pred)
         ###########################
         identity = torch.eye(3).cuda().unsqueeze(0).repeat(batch_size, 1, 1)
         loss = F.mse_loss(torch.matmul(rotation_ab_pred.transpose(2, 1), rotation_ab), identity) + F.mse_loss(
             translation_ab_pred, translation_ab)
+        
         if cfg.TRAINING.CYCLE:
             rotation_loss = F.mse_loss(torch.matmul(rotation_ba_pred, rotation_ab_pred), identity.clone())
             translation_loss = torch.mean(
@@ -102,18 +88,19 @@ def one_epoch(cfg, net, data_loader, opt, boardio, epoch, is_train):
         if cfg.TRAINING.CYCLE:
             total_cycle_loss = total_cycle_loss + cycle_loss.item() * 0.1 * batch_size
 
-        if not is_train or it % 9 == 0 or cfg.TRAINING.OVERFIT:
-            fig = visualize_transformation(
-                src.cpu().numpy(),
-                target.cpu().numpy(),
-                rotation_ab.cpu().numpy(),
-                translation_ab.cpu().numpy(),
-                rotation_ab_pred.detach().cpu().numpy(),
-                translation_ab_pred.detach().cpu().numpy(),
-            )
-            boardio.add_figure(f'predictions_{"train" if is_train else "test"}',
-                               fig,
-                               global_step=(epoch + 1) * (it + 1))
+        if it == len(data_loader) // 10 or cfg.TRAINING.OVERFIT:
+            # fig = visualize_transformation(
+            #     src.cpu().numpy(),
+            #     target.cpu().numpy(),
+            #     rotation_ab.cpu().numpy(),
+            #     translation_ab.cpu().numpy(),
+            #     rotation_ab_pred.detach().cpu().numpy(),
+            #     translation_ab_pred.detach().cpu().numpy(),
+            # )
+            # boardio.add_figure(f'predictions_{"train" if is_train else "test"}',
+            #                    fig,
+            #                    global_step=(epoch + 1) * (it + 1))
+            
             pcds = visualize_pred_transformation(
                 src.cpu().numpy(),
                 target.cpu().numpy(),
@@ -121,6 +108,9 @@ def one_epoch(cfg, net, data_loader, opt, boardio, epoch, is_train):
                 translation_ab_pred.detach().cpu().numpy(),
             )
             for jk, pcd in enumerate(pcds):
+                if not os.path.exists("output_debug"):
+                    os.mkdir("output_debug")
+                    
                 o3d.io.write_point_cloud(os.path.join("output_debug", f"pointclouds_{jk}.ply"), pcd)
 
     rotations_ab = np.concatenate(rotations_ab, axis=0)

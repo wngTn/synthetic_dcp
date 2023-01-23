@@ -1,0 +1,38 @@
+NET:
+  EMB_NN: 'dgcnn'
+  POINTER: 'identity'
+  HEAD: 'mlp'
+  EMB_DIMS: 512
+  N_HEADS: 4
+  FF_DIMS: 1024
+  DROPOUT: 0.0
+  #
+  N_ITERS: 3
+  N_BLOCKS: 1
+  N_KEYPOINTS: 512
+  N_SUBSAMPLED_POINTS: 768
+  DISCOUNT_FACTOR: 0.9
+  MODEL_PATH: ''
+  FEATURE_ALIGNMENT_LOSS: 0.1
+  CYCLE_CONSISTENCY_LOSS: 0.1
+  TEMP_FACTOR: 100
+  CAT_SAMPLER: "gumbel_softmax"
+  
+  # see main() at https://github.com/WangYueFt/prnet/blob/master/main.py for more information
+
+SEED: 1234
+
+TRAINING:
+  OVERFIT: True
+  BATCH_SIZE: 5
+  EPOCHS: 250
+  LR: 1e-3
+  MOMENTUM: 0.9
+  CYCLE: False
+  NUM_POINTS: 1024
+  FACTOR: 4
+
+
+TESTING:
+  BATCH_SIZE: 5
+  MODEL: 'TODO'

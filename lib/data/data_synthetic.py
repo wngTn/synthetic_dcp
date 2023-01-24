@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import torch
 
 from utils.util import unpack_poses, add_gear_to_smpl_mesh
-from utils.indices import HEAD, HEAD_AUGMENTED
+from utils.indices import HEAD
 from smplmodel.body_param import load_model
 
 PATH = Path("data") / "smpl_training_poses.pkl"

@@ -1,4 +1,4 @@
-FILE := main
+FILE := proposal
 OUT  := build
 
 .PHONY: pdf

@@ -70,7 +70,6 @@ def store_solution(args, index, solution):
     if not os.path.exists(f"data/solutions/{args.exp_name}"):
         os.makedirs(f"data/solutions/{args.exp_name}")
 
-    print(solution)
     with open(f"data/solutions/{args.exp_name}/{index}.json", "w+") as file:
         solution = [x.tolist() for x in solution]
         json_str = json.dumps(solution)

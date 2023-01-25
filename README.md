@@ -13,8 +13,18 @@ For details see the full [project proposal](proposal/proposal.pdf).
 
 This project was conducted as part of the 2022/23 Machine Learning for 3D Geometry course (IN2392) at the Technical University of Munich.
 
+## Problem ##
 
-<!-- It would be nice to have one image here of the OR scene / our problem or smth along the lines  -->
+To following shows the real-world point cloud data of an OR (see "Operation Room Data" below for details on this data).
+In the scene, a DL-based detector has identified a person and placed a [SMPL](https://smpl.is.tue.mpg.de/) mesh at the estimated position.
+As one can see the estimation of the head is not very good and needs refinement to be usable for anonymization.
+In this project, different algorithms are compared in terms of their performance in computing a rotation and translation matrix that better aligns the head with the person in the OR.
+
+<figure class="video_container">
+ <video controls="false">
+ <source src="assets/problem_vis.mp4" type="video/mp4" width="400">
+ </video>
+</figure>
 
 ## Synthetic Dataset ##
 
@@ -24,10 +34,13 @@ For our application, this dataset doesn't suffice, as our observed point clouds/
 Therefore, to train the DCP architecture we create a synthetic dataset to mimic the real data of the OR setting as closely as possible.
 
 The parameters for synthetically created SMPL poses can be found [here](https://nextcloud.in.tum.de/index.php/s/H9W8rAAoHiXHjfz) (128MB).
+<!-- TODO maybe make download automatic -->
+
 
 It has over 90k different poses sampled from the [HumanAct12 dataset](https://ericguo5513.github.io/action-to-motion/).
 The following GIF visualizes 100 of these poses.
  <!-- TODO decide if we want to reference it here ([code used to create it](scripts/peak_synthetic_smpl.py)) -->
+
 
 
 <img src="assets/smpl_poses.gif" width="400"/>
@@ -53,7 +66,7 @@ After rigid alignment with DCP
 <img src="assets/OR_aligned.gif" width="400"/>
 
 
-For details see the full [project report](TODO link) and the [presentation](TODO link)
+For details see the full [project report](TODO link) and the [presentation slides](TODO link).
 
 
 <!-- ## File Structure ##
@@ -82,7 +95,7 @@ For details see the full [project report](TODO link) and the [presentation](TODO
 pip install -r requirements.txt
 ```
 
-You may want to use a venv/dependency manager (e.g Conda)
+You may want to use a venv + dependency manager (e.g Conda)
 
 
 ## SMPL Models ##
@@ -91,13 +104,16 @@ You may want to use a venv/dependency manager (e.g Conda)
 
 The SMPL models are taken from: [https://smpl.is.tue.mpg.de](https://smpl.is.tue.mpg.de).
 
-We did not create them nor hold intellectual property on these.
-We use these under the provided license for non-commercial scientific purposes as granted under:
+We did not create them nor hold intellectual property on them.
+We use them under the provided license for non-commercial scientific purposes as granted under:
 
 - [https://smpl.is.tue.mpg.de/modellicense.html](https://smpl.is.tue.mpg.de/modellicense.html) 
 - [https://smpl.is.tue.mpg.de/bodylicense.html](https://smpl.is.tue.mpg.de/bodylicense.html)
 
-Please review and comply with their license requirements as stated on the linked webpage before using our code.
+To execute the SMPL model, one could be interested in the code provided in [EasyMocap](https://github.com/zju3dv/EasyMocap/tree/master/easymocap/smplmodel) and a look at the emptiness of `./lib/smplmodel` in this project.
+
+Please review and comply with the license requirements of the SMPL creators as stated on the linked webpage before using any code.
+
 
 ## Operation Room Data ##
 
@@ -109,14 +125,6 @@ If you are in legal possession you may download and save the trial data under `.
 Without this data, you are not able to test the synthetically trained model on real-world data.
 The rest of the project is working as is.
 
-<!-- ## Debugging ##
-
-Use debug.py and the key maps are:
-- A for advance
-- S for going back
-- Q for the next person
-- D for closing the whole debugger -->
-
 ## Contributors
 
 In no particular order
@@ -126,6 +134,15 @@ In no particular order
 - Yutong Hou
 - [Johannes Volk](linkedin.com/in/jovo/)
 
+## Further Work
+
+[PRNet](https://arxiv.org/pdf/1910.12240.pdf) is a Partial-to-Partial Registration DL-based approach.
+We deemed it might be suitable for our application,
+as our real-world measurements are also only partial but we were not able to reach reasonable results with it.
+
+The [code of PRnet](https://github.com/WangYueFt/prnet) is included in this project and may be subject to further experiments.
+
+As the detection algorithm that provides the first guess on an alignment is also DL-based it should be possible to create a pipeline that is end-to-end trainable.
 
 ## References
 This project is based on the following work,

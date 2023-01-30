@@ -6,7 +6,7 @@ lib/data/modelnet40_ply_hdf5_2048
 data/smpl_training_poses.pkl
 output_debug/*
 assets/*.ply
-
+*.jpg
 # VsCode
 .vscode
 # MacOS

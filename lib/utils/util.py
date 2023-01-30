@@ -224,6 +224,7 @@ def load_mesh(data_dir: str, frame_id):
     data = read_smpl(os.path.join(data_dir, str(frame_id).zfill(6) + ".json"))
     # all the meshes in a frame
     frame_meshes = []
+    frame_ids = []
     for i in range(len(data)):
         frame = data[i]
         Rh = frame["Rh"]
@@ -238,8 +239,9 @@ def load_mesh(data_dir: str, frame_id):
         model = create_mesh(vertices=vertices, faces=body_model.faces)
 
         frame_meshes.append(model)
+        frame_ids.append(frame["id"])
 
-    return frame_meshes
+    return frame_meshes, frame_ids
 
 
 def create_logger(path=None):
@@ -276,6 +278,119 @@ def create_logger(path=None):
     logging.getLogger().addHandler(stdout_handler)
 
     return logger, str(final_output_dir)
+
+
+import os.path as osp
+import json
+import os
+import numpy as np
+from scipy.spatial.transform import Rotation
+import cv2
+
+
+def rot_trans_to_homogenous(rot, trans):
+    """
+    Args
+        rot: 3x3 rotation matrix
+        trans: 3x1 translation vector
+    Returns
+        4x4 homogenous matrix
+    """
+    X = np.zeros((4, 4))
+    X[:3, :3] = rot
+    X[:3, 3] = trans.T
+    X[3, 3] = 1
+    return X
+
+
+def homogenous_to_rot_trans(X):
+    """
+    Args
+        x: 4x4 homogenous matrix
+    Returns
+        rotation, translation: 3x3 rotation matrix, 3x1 translation vector
+    """
+
+    return X[:3, :3], X[:3, 3].reshape(3, 1)
+
+
+def rotation_to_homogenous(vec):
+    rot_mat = Rotation.from_rotvec(vec)
+    swap = np.identity(4)
+    swap = np.zeros((4, 4))
+    swap[:3, :3] = rot_mat.as_matrix()
+    swap[3, 3] = 1
+    return swap
+
+def load_camera_params(dataset_root):
+    """Loads the parameters of all the cameras in the dataset_root directory
+
+    Args:
+        dataset_root (string): the path to the camera data
+
+    Returns:
+        List[dict]: a list of dicts where the parameters are in
+    """
+    scaling = 1000
+    cameras = list(sorted(next(os.walk(dataset_root))[1]))
+    camera_params = []
+    for cam in cameras:
+        ds = {"id": cam}
+        intrinsics = osp.join(dataset_root, cam, 'camera_calibration.yml')
+        assert osp.exists(intrinsics)
+        fs = cv2.FileStorage(intrinsics, cv2.FILE_STORAGE_READ)
+        color_intrinsics = fs.getNode("undistorted_color_camera_matrix").mat()
+        ds['fx'] = color_intrinsics[0, 0]
+        ds['fy'] = color_intrinsics[1, 1]
+        ds['cx'] = color_intrinsics[0, 2]
+        ds['cy'] = color_intrinsics[1, 2]
+
+        # distortion parameters can be neglected
+        dist = fs.getNode("color_distortion_coefficients").mat()
+        ds['k'] = np.array(dist[[0, 1, 4, 5, 6, 7]])
+        ds['p'] = np.array(dist[2:4])
+
+        depth2color_r = fs.getNode('depth2color_rotation').mat()
+        depth2color_t = fs.getNode('depth2color_translation').mat() / scaling
+
+        depth2color = rot_trans_to_homogenous(depth2color_r,
+                                              depth2color_t.reshape(3))
+        ds["depth2color"] = depth2color
+
+        extrinsics = osp.join(dataset_root, cam, "world2camera.json")
+        assert osp.exists(extrinsics)
+        with open(extrinsics, 'r') as f:
+            ext = json.load(f)
+            trans = np.array([x for x in ext['translation'].values()])
+
+            _R = ext['rotation']
+            rot = Rotation.from_quat([_R['x'], _R['y'], _R['z'],
+                                      _R['w']]).as_matrix()
+            ext_homo = rot_trans_to_homogenous(rot, trans)
+
+        # flip coordinate transform back to opencv convention
+        yz_flip = rotation_to_homogenous(np.pi * np.array([1, 0, 0]))
+        YZ_SWAP = rotation_to_homogenous(np.pi / 2 * np.array([1, 0, 0]))
+
+        # first swap into OPENGL convention, then we can apply intrinsics.
+        # then swap into our own Z-up prefered format..
+        depth2world = YZ_SWAP @ ext_homo @ yz_flip
+
+        ds["depth2world"] = depth2world
+        color2world = depth2world @ np.linalg.inv(depth2color)
+
+        ds["color2world"] = color2world
+
+        world2color = np.linalg.inv(color2world)
+        ds["world2color"] = world2color
+        R, T = homogenous_to_rot_trans(world2color)
+        ds["R"] = R
+        ds["T"] = T
+
+        camera_params.append(ds)
+
+    return camera_params
+
 
 
 class CustomFormatter(logging.Formatter):

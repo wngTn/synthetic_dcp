@@ -1,25 +1,22 @@
-from __future__ import print_function
 import os
-import gc
 import argparse
 import torch
+
 import __init_paths__
 from lib.data.test_data import TestData, collate
-from lib.net.dcp import DCP
 import numpy as np
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import pathlib
-import shutil
 from datetime import datetime
+from lib.registration.FilterReg import FilterReg
+from lib.registration.ICP import ICP
+from lib.registration.Aligner import Aligner
 import numpy as np
 import argparse
 from lib.core.configs import get_cfg_defaults
+import open3d as o3d
 from json import JSONEncoder
 import json
-
-FRAME_ID = 2080
-
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Visualize in 3D")
@@ -63,50 +60,32 @@ def store_solution(args, frame_id, dump):
         json_str = json.dumps(dump, indent=4)
         file.write(json_str)
 
-def read_solution(args, index):
-    with open(f"data/solutions/{args.exp_name}/{index}.json", "r") as file:
-        lists = json.loads(file.read())
-        solution = [np.array(x, dtype=np.float32) for x in lists]
-        return solution
-
-def test(args, cfg, net, test_loader):
-    net.eval()
+def test(args, aligner, test_loader):
 
     for it, item in tqdm(enumerate(test_loader), total=len(test_loader)):
         frame_id = item["frame_id"][0]
         dump = {}
 
-        for src, target, idx in zip(item["source"], item["target"], item["ids"]):
+        for mesh_vert, mesh_triang, src, target, idx in zip(item["mesh_vert"], item["mesh_triang"], item["source"], item["target"], item["ids"]):
+            if len(src) == 0:
+                continue
+            src = src[0].T # .cpu().numpy().T
+            target = target[0].T #.cpu().numpy().T
 
-            src = torch.tensor(src).cuda()
-            target = torch.tensor(target).cuda()
-
-            if len(src) == 0 or len(target) == 0:
+            if len(src) == 0:
                 continue
 
-            solution = net(src, target)
+            meshes = [o3d.geometry.TriangleMesh(vertices=o3d.utility.Vector3dVector(mesh_vert[0]), triangles=o3d.utility.Vector3iVector(mesh_triang[0]))]
 
-            solution = [x.cpu().detach().numpy() for x in solution]
-            
-            # check that storing and loading is transparent and correct
-            # assert all(np.array_equal(x, y) for x, y in zip(solution, read_solution(args, it)))
-            
-            (
-                rotation_ab_pred,
-                translation_ab_pred,
-                rotation_ba_pred,
-                translation_ba_pred,
-            ) = solution
-
-            dump[idx[0]] = { "rot" : rotation_ab_pred, "trans" : translation_ab_pred}
+            tf_matrix = aligner.align_meshes((src, meshes[0]))            
 
             # pcd = o3d.geometry.PointCloud()
 
             # points = np.concatenate(
             #     (
-            #         src[0].T,
-            #         target[0].T,
-            #         (target[0].T - translation_ab_pred[0]) @ rotation_ab_pred[0],
+            #         src,
+            #         target,
+            #         (target - tf_matrix[:3, 3]) @ tf_matrix[:3, :3],
             #     ),
             #     axis=0,
             # )
@@ -121,8 +100,12 @@ def test(args, cfg, net, test_loader):
             # pcd.points = o3d.utility.Vector3dVector(points)
             # pcd.colors = o3d.utility.Vector3dVector(colors)
 
-            # o3d.io.write_point_cloud(f"test{it}_{j}.ply", pcd)
+            # o3d.io.write_point_cloud(f"test{it}.ply", pcd)
 
+            dump[idx[0]] = { "rot" : tf_matrix[:3, :3].tolist(), "trans" : tf_matrix[:3, 3].tolist()}
+
+        store_solution(args, frame_id, dump)
+            
 
 def main():
     args, cfg = parse_args()
@@ -133,11 +116,22 @@ def main():
 
     test_loader = DataLoader(TestData(1024, None, load=["mesh", "pcd"]), num_workers=1, collate_fn=collate)
 
-    net = DCP(cfg).cuda()
-    net.load_state_dict(torch.load("checkpoints/01_18-08_46_57/models/model.latest.t7"))
+    registration_params_filterreg = {}
+    registration_params_filterreg["max_iter"] = 1825000000
+    registration_params_filterreg["w"] = 0
+    registration_params_filterreg["sigma2"] = 0.000285
+    registration_params_filterreg["tol"] = 0.05
 
-    with torch.no_grad():
-        test(args, cfg, net, test_loader)
+    registration_params_icp = {}
+    registration_params_icp["max_iter"] = 250
+    registration_params_icp["threshold"] = 0.05
+
+    icp = ICP(**registration_params_icp)
+    filterreg = FilterReg(**registration_params_filterreg)
+
+    args.exp_name = "filterreg"
+    aligner = Aligner(voxel_size=0.0125, rigidRegistration=filterreg, icp=None)
+    test(args, aligner, test_loader)
 
     print("FINISH")
 

@@ -2,7 +2,7 @@ import numpy as np
 from probreg import filterreg
 from registration.RigidRegistration import RigidRegistration
 import torch
-from net.model import DCP
+from net.dcp import DCP
 
 import logging
 

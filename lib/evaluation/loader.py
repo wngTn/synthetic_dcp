@@ -21,9 +21,8 @@ class WiderfaceLoader(object):
     -------
     a wider parser
     """
-    def __init__(self, path_to_label, path_to_image, fname):
+    def __init__(self, path_to_label, fname):
         self.path_to_label = path_to_label
-        self.path_to_image = path_to_image
 
         fpath = os.path.join(path_to_label, fname)
         wf_file = open(fpath, 'r')

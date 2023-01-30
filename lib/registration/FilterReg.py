@@ -16,11 +16,6 @@ class FilterReg(RigidRegistration):
         super().__init__(**kwargs)
 
     def run(self, source_pcd, target_pcd, trans_init=np.eye(4)):
-        if len(target_pcd.points) < 200:
-            logger.debug(
-                f"The target point cloud has {len(target_pcd.points)} many points -- skipping filter registration"
-            )
-            return np.eye(4)
 
         tf_param = filterreg.registration_filterreg(
             source_pcd,

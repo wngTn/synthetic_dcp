@@ -67,8 +67,8 @@ class TestData(Dataset):
                 item_data["face_triang"].append(np.array(face_mesh.triangles))
 
 
-            # head_mesh_center = head_mesh.get_center()
-            # head_mesh.translate(-head_mesh_center)
+            head_mesh_center = head_mesh.get_center()
+            head_mesh.translate(-head_mesh_center)
 
             if "mesh" in self.load:
                 face_mesh = copy.deepcopy(head_mesh)
@@ -88,7 +88,7 @@ class TestData(Dataset):
             bbox.max_bound = bbox.max_bound + np.array([0.15, 0.15, 0.15])
             bbox.min_bound = bbox.min_bound - np.array([0.15, 0.15, 0.15])
 
-            # pcd_head.translate(-head_mesh_center)
+            pcd_head.translate(-head_mesh_center)
             pcd_head = pcd_head.crop(bbox)
             pcd_head = pcd_head.voxel_down_sample(self.voxel_size)
             if len(pcd_head.points) < 1024:

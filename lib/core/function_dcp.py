@@ -14,7 +14,7 @@ def evaluate_real_data(net):
     
     i = 0
     k = 0
-    while i < 25:
+    while i < 10:
         if len(dataset[k]["source"]) != 0:
             # the switch of src and target is intentional
             # it seems to improve performance if we use the 0 centered pcd (head) as source 

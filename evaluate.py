@@ -366,7 +366,6 @@ def render(data_loader):
 
             pt3d_mesh = convertMeshes2PT3DMeshes(mesh)
             face_images = image_rendering(pt3d_mesh, Rs, Ts, fls, pps, image_sizes)
-
             face_list = torch.stack([
                 face_images[j] for j in range(len(face_images))
             ])

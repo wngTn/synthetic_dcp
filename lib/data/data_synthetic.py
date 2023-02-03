@@ -61,8 +61,8 @@ class SmplSynthetic(Dataset):
         bbox = o3d.geometry.AxisAlignedBoundingBox.create_from_points(mesh_head.vertices)
         bbox = bbox.scale(1.05, bbox.get_center())
 
-        bbox.max_bound = bbox.max_bound + np.array([0.05, 0.05, 0.05])
-        bbox.min_bound = bbox.min_bound - np.array([0.05, 0.05, 0.05])
+        bbox.max_bound = bbox.max_bound + np.array([0.15, 0.15, 0.15])
+        bbox.min_bound = bbox.min_bound - np.array([0.15, 0.15, 0.15])
 
         return mesh_full.crop(bbox)
 
@@ -113,9 +113,9 @@ class SmplSynthetic(Dataset):
         # if we keep it as is the target remains at origin in both
         # therefore we need to augment the source to mimic translation we expect to see during testing
         translation_ab = np.array([
-            np.random.uniform(-0.05, 0.05),
-            np.random.uniform(-0.05, 0.05),
-            np.random.uniform(-0.05, 0.05),
+            np.random.uniform(-0.075, 0.075),
+            np.random.uniform(-0.075, 0.075),
+            np.random.uniform(-0.075, 0.075),
         ])
 
         if self.split == 'overfit':

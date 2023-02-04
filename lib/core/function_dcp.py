@@ -5,12 +5,11 @@ import torch.nn.functional as F
 import open3d as o3d
 import os
 
-from utils.util import transform_point_cloud, npmat2euler
-from utils.vis import visualize_transformation, visualize_pred_transformation
+from utils.vis import visualize_pred_transformation
 from data.test_data import TestData
 
 def evaluate_real_data(net):    
-    dataset = TestData(target_augmented = True)
+    dataset = TestData(target_augmented = False)
     
     i = 0
     k = 0
@@ -126,19 +125,7 @@ def one_epoch(cfg, net, data_loader, opt, boardio, epoch, is_train):
         if cfg.TRAINING.CYCLE:
             total_cycle_loss = total_cycle_loss + cycle_loss.item() * 0.1 * batch_size
 
-        if it == len(data_loader) // 10 or cfg.TRAINING.OVERFIT:
-            # fig = visualize_transformation(
-            #     src.cpu().numpy(),
-            #     target.cpu().numpy(),
-            #     rotation_ab.cpu().numpy(),
-            #     translation_ab.cpu().numpy(),
-            #     rotation_ab_pred.detach().cpu().numpy(),
-            #     translation_ab_pred.detach().cpu().numpy(),
-            # )
-            # boardio.add_figure(f'predictions_{"train" if is_train else "test"}',
-            #                    fig,
-            #                    global_step=(epoch + 1) * (it + 1))
-            
+        if it == len(data_loader) // 10:
             pcds = visualize_pred_transformation(
                 src.cpu().numpy(),
                 target.cpu().numpy(),

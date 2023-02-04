@@ -1,9 +1,9 @@
-# 3D Head Alignment Using Deep Closest Point #
+# Point-Set Alignment Using Weak Labels #
 
 
 With the advent of recent technologies, multi-view RGB-D recordings have become the
-prevalent way of data acquisition in operating rooms (OR). [Previous works](TODO add Reference) established
-the benefits of using 3D information to detect and anonymize faces of 2D images in
+prevalent way of data acquisition in operating rooms (OR).
+Previous works established the benefits of using 3D information to detect and anonymize faces of 2D images in
 such multi-view settings. However, real-world 3D data often suffers from noisy and
 incomplete point clouds, which yield erroneous alignments using probabilistic point set
 alignment methods like [coherent point drift (CPD)](https://arxiv.org/pdf/0905.2635.pdf) and its variants.
@@ -30,16 +30,14 @@ In this project, different algorithms are compared in terms of their performance
 
 [DCP](https://arxiv.org/pdf/1905.03304.pdf) is originally trained on the [ModelNet40 dataset](https://modelnet.cs.princeton.edu/).
 
-For our application, this dataset doesn't suffice, as our observed point clouds/targets for alignment (human head) have very different geometry.
-Therefore, to train the DCP architecture we create a synthetic dataset to mimic the real data of the OR setting as closely as possible.
+For our application, this dataset doesn't suffice, as our observed point clouds/targets for alignment (i.e. human heads) have very different geometry.
+Therefore, to train the DCP architecture we create a synthetic dataset to imitate the real data of the OR setting as closely as possible.
 
 The parameters for synthetically created SMPL poses can be found [here](https://nextcloud.in.tum.de/index.php/s/H9W8rAAoHiXHjfz) (128MB).
 <!-- TODO maybe make download automatic -->
 
-
 It has over 90k different poses sampled from the [HumanAct12 dataset](https://ericguo5513.github.io/action-to-motion/).
-The following GIF visualizes 100 of these poses.
- <!-- TODO decide if we want to reference it here ([code used to create it](scripts/peak_synthetic_smpl.py)) -->
+The following GIF visualizes 100 of these poses ([code used to create it](scripts/peak_synthetic_smpl.py))
 
 
 
@@ -95,14 +93,13 @@ For details see the full [project report](TODO link) and the [presentation slide
 pip install -r requirements.txt
 ```
 
-You may want to use a venv + dependency manager (e.g Conda)
+You may want to use a virtual environment + dependency manager (e.g use Conda)
 
+To install PyTorch3d see `https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md`
 
 ## SMPL Models ##
 
-`python scripts/download_all.py # downloads the SMPL models`
-
-The SMPL models are taken from: [https://smpl.is.tue.mpg.de](https://smpl.is.tue.mpg.de).
+The SMPL models can be downloaded from: [https://smpl.is.tue.mpg.de](https://smpl.is.tue.mpg.de).
 
 We did not create them nor hold intellectual property on them.
 We use them under the provided license for non-commercial scientific purposes as granted under:
@@ -110,9 +107,10 @@ We use them under the provided license for non-commercial scientific purposes as
 - [https://smpl.is.tue.mpg.de/modellicense.html](https://smpl.is.tue.mpg.de/modellicense.html) 
 - [https://smpl.is.tue.mpg.de/bodylicense.html](https://smpl.is.tue.mpg.de/bodylicense.html)
 
-To execute the SMPL model, one could be interested in the code provided in [EasyMocap](https://github.com/zju3dv/EasyMocap/tree/master/easymocap/smplmodel) and a look at the emptiness of `./lib/smplmodel` in this project.
+Therefore, we adhere to their demand not to publish/distribute their code/model.
+To execute the SMPL model, one could be interested in the code provided in [EasyMocap](https://github.com/zju3dv/EasyMocap/tree/master/easymocap/smplmodel) Notice the emptiness of `./lib/smplmodel` in this project.
 
-Please review and comply with the license requirements of the SMPL creators as stated on the linked webpage before using any code.
+Please review and comply with the license requirements of the SMPL authors as stated on their linked webpage before using any code.
 
 
 ## Operation Room Data ##
@@ -121,18 +119,18 @@ As the data captured in the OR is the proprietary property of the [chair of
 Computer Aided Medical Procedures (CAMP)](https://www.cs.cit.tum.de/camp/start/) at TUM, we are not able to publish it here.
 
 If you are in legal possession you may download and save the trial data under `./data/trial`.
+The 2D face bounding box annotations are at `./data/gt` as this is part of our contribution.
 
 Without this data, you are not able to test the synthetically trained model on real-world data.
+You can run `python ./demo/visualize_pointcloud.py` to see one frame as a demo.
 The rest of the project is working as is.
 
 ## Contributors
 
-In no particular order
-
+- [Johannes Volk](linkedin.com/in/jovo/)
 - Tony Wang
 - Yushan Zheng
 - Yutong Hou
-- [Johannes Volk](linkedin.com/in/jovo/)
 
 ## Further Work
 

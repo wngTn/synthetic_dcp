@@ -1,18 +1,12 @@
-import os
-import sys
-import glob
-import h5py
 import copy
 import math
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
 from lib.utils.util import quat2mat
 
 
-# Part of the code is referred from: http://nlp.seas.harvard.edu/2018/04/03/attention.html#positional-encoding
+# code is referred from: http://nlp.seas.harvard.edu/2018/04/03/attention.html#positional-encoding
 
 
 def clones(module, N):
@@ -477,14 +471,14 @@ class SVDHead(nn.Module):
 
 
 class DCP(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg, global_feature = False):
         super(DCP, self).__init__()
         self.emb_dims = cfg.NET.EMB_DIMS
         self.cycle = cfg.TRAINING.CYCLE
         if cfg.NET.EMB_NN == "pointnet":
             self.emb_nn = PointNet(emb_dims=self.emb_dims)
         elif cfg.NET.EMB_NN == "dgcnn":
-            self.emb_nn = DGCNN(emb_dims=self.emb_dims)
+            self.emb_nn = DGCNN(emb_dims=self.emb_dims, feature=global_feature)
         else:
             raise Exception("Not implemented")
 

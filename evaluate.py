@@ -448,8 +448,8 @@ def write_preds(creator, bboxes):
                 camera_outputs[cam_str] = output_str
 
     for cam_id, output_string in camera_outputs.items():
-        outFile = open(os.path.join(output_dir, f"{cam_id}.txt"), 'w')
-        outFile.write(output_string)
+        with open(os.path.join(output_dir, f"{cam_id}.txt"), 'w') as out_file:
+            out_file.write(output_string)
 
 if __name__=='__main__':
     test_loader = DataLoader(TestData(1024, load=["face"]), num_workers=1, collate_fn=collate)

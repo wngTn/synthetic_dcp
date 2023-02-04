@@ -16,10 +16,8 @@ def visualize_pointcloud(vis, frame_id):
 
 
 if __name__ == "__main__":
-    # draw ball at point
+
     frame_id = 2000
-    # new extrinsics
-    # point = np.array([0.249721, -0.005661, -0.974014])
     app = gui.Application.instance
     app.initialize()
     vis = o3d.visualization.O3DVisualizer("Open3D - 3D Text", 1024, 768)

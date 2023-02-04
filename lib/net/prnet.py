@@ -15,9 +15,9 @@ import open3d as o3d
 
 
 from lib.utils.util import transform_point_cloud, quat2mat, npmat2euler
-from utils.vis import visualize_transformation, visualize_pred_transformation
+from utils.vis import visualize_pred_transformation
 
-# this code is referred from: https://github.com/WangYueFt/prnet
+# code is referred from: https://github.com/WangYueFt/prnet
 
 
 def clones(module, N):

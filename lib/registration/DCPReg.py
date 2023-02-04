@@ -41,6 +41,3 @@ class DCPReg(RigidRegistration):
         tf_matrix[:3, :3] = R
         tf_matrix[:3, 3] = T
         return tf_matrix
-
-    def run_debug(self, source_pcd, target_pcd, trans_init=np.eye(4)):
-        pass

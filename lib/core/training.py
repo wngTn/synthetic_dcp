@@ -22,7 +22,7 @@ def train_dcp(args, cfg, net, train_loader, test_loader, boardio, textio):
     else:
         print("Use Adam")
         opt = optim.Adam(net.parameters(), lr=cfg.TRAINING.LR, weight_decay=1e-4)
-    scheduler = MultiStepLR(opt, milestones=[10, 20, 30], gamma=0.1)
+    scheduler = MultiStepLR(opt, milestones=[5, 10, 15], gamma=0.1)
 
     best_test_loss = np.inf
 

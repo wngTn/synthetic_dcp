@@ -10,24 +10,30 @@ import os
 # arg3: label file name (txt file)
 # Wider = WIDER('arg1', 'arg2', 'wf.mat')
 
-def load_gt(imgrootpath, cam_id):
-    gt_labelpath = os.path.join("gt_loader", f"cn0{cam_id}_gt", "wider_face_split") 
-    # gt_imgpath = os.path.join("data", f"cn0{cam_id}")
+def load_gt():
+    gt = {}
+    for i in range(6):
+        cam_dict = {}
+        gt[f"cn0{i + 1}"] = cam_dict
+        gt_labelpath = os.path.join("data", "gt", f"cn0{i + 1}", "wider_face_split") 
 
-    gt_Wider = WiderfaceLoader(gt_labelpath, imgrootpath, 'wider_face_default_bbx_gt.txt')
-      
-    return gt_Wider
+        gt_Wider = WiderfaceLoader(gt_labelpath, 'wider_face_default_bbx_gt.txt')
+        for fname, boxes in zip(gt_Wider.names, gt_Wider.boxes):
+            cam_dict[fname] = boxes
+        
+    return gt
 
 # show one example
-imgrootpath = 'F:\ML3D-project\data\cn06'  # <-- input img folder path
+imgrootpath = "data/trial/cn06"  # <-- input img folder path
 
-gt_test = load_gt(imgrootpath, 6)
+gt_test = load_gt()["cn06"]
 
-gt_imgnames = gt_test.names
-gt_bbox = gt_test.boxes
+gt_imgnames = list(gt_test.keys())
+gt_bbox = list(gt_test.values())
 
 gt_imgname_eg = gt_imgnames[0]  
 gt_bbox_eg = gt_bbox[0]
+print(os.path.join(imgrootpath, gt_imgname_eg))
 
 im = cv2.imread(os.path.join(imgrootpath, gt_imgname_eg))
 im = im[:, :, (2, 1, 0)]
@@ -46,3 +52,8 @@ plt.axis('off')
 plt.tight_layout()
 plt.draw()
 plt.show()
+
+
+
+
+# DELETE THIS FILE IT IS FOR DEBUGGING ONLY

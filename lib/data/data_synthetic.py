@@ -7,6 +7,7 @@ import open3d as o3d
 from copy import deepcopy
 import matplotlib.pyplot as plt
 import torch
+import random
 
 from utils.util import unpack_poses, add_gear_to_smpl_mesh
 from utils.indices import HEAD
@@ -35,7 +36,7 @@ class SMPLAugmentation():
 
 class SmplSynthetic(Dataset):
 
-    def __init__(self, split, num_output_points=1024, transform=lambda x: x, target_augmented = False):
+    def __init__(self, split, num_output_points=1024, transform=lambda x: x, target_augmented = False, head_as_mesh = False):
         self.smpl_poses = unpack_poses(PATH)
         self.smpl_poses_len = len(self.smpl_poses)
         self.transform = transform
@@ -45,10 +46,11 @@ class SmplSynthetic(Dataset):
         self.target_augmented = target_augmented
         self.body_model = load_model(gender="neutral", model_path=Path("data").joinpath("smpl_models"))
         self.body_model.eval()
+        self.head_as_mesh = head_as_mesh
         
         # choose dims of dataset
         self.test_len = 250
-        self.len = 2500 if split == 'train' else 10 if split == 'overfit' else self.test_len
+        self.len = 1000 if split == 'train' else 10 if split == 'overfit' else self.test_len
         self.split = split
 
     def gaussian_noise(self, pcd, variance):
@@ -61,8 +63,8 @@ class SmplSynthetic(Dataset):
         bbox = o3d.geometry.AxisAlignedBoundingBox.create_from_points(mesh_head.vertices)
         bbox = bbox.scale(1.05, bbox.get_center())
 
-        bbox.max_bound = bbox.max_bound + np.array([0.15, 0.15, 0.15])
-        bbox.min_bound = bbox.min_bound - np.array([0.15, 0.15, 0.15])
+        bbox.max_bound = bbox.max_bound + np.array([0.10, 0.10, 0.10])
+        bbox.min_bound = bbox.min_bound - np.array([0.10, 0.10, 0.10])
 
         return mesh_full.crop(bbox)
 
@@ -82,9 +84,9 @@ class SmplSynthetic(Dataset):
             head_mesh.remove_vertices_by_index(list(set(range(6890)) - set(HEAD)))
 
         # get a random rotation matrix
-        anglex = np.random.uniform() * np.pi / self.factor
-        angley = np.random.uniform() * np.pi / self.factor
-        anglez = np.random.uniform() * np.pi / self.factor
+        anglex = random.choice((-1, 1)) * np.random.uniform() * np.pi / self.factor
+        angley = random.choice((-1, 1)) * np.random.uniform() * np.pi / self.factor
+        anglez = random.choice((-1, 1)) * np.random.uniform() * np.pi / self.factor
 
         if self.split == 'overfit':
             anglex = .25
@@ -113,13 +115,13 @@ class SmplSynthetic(Dataset):
         # if we keep it as is the target remains at origin in both
         # therefore we need to augment the source to mimic translation we expect to see during testing
         translation_ab = np.array([
-            np.random.uniform(-0.075, 0.075),
-            np.random.uniform(-0.075, 0.075),
-            np.random.uniform(-0.075, 0.075),
+            random.choice((-1, 1)) * np.random.uniform(0.075, 0.1),
+            random.choice((-1, 1)) * np.random.uniform(0.075, 0.1),
+            random.choice((-1, 1)) * np.random.uniform(0.075, 0.1),
         ])
 
-        if self.split == 'overfit':
-            translation_ab = np.array([0.05, 0.05, -0.05])
+        # if self.split == 'overfit':
+        #     translation_ab = np.array([0.05, 0.05, -0.05])
         
         translation_ba = -R_ba.dot(translation_ab)
 
@@ -166,6 +168,8 @@ class SmplSynthetic(Dataset):
         # crop mesh with bounding box
         augmented_mesh = self.crop_mesh(augmented_mesh, transformed_head_mesh)
 
+
+
         # uniformly downsample the meshes so we can have the dimension the rigid registration requires
         augmented_pcd = augmented_mesh.sample_points_uniformly(number_of_points=self.augmented_mesh_output_points)
 
@@ -177,6 +181,13 @@ class SmplSynthetic(Dataset):
         pointcloud1 = np.random.permutation(np.array(augmented_pcd.points)).T
         pointcloud2 = np.random.permutation(np.array(transformed_head_pcd.points)).T
         
+        # stuff for filterreg
+        if self.head_as_mesh:
+            return pointcloud1.astype("float32"), pointcloud2.astype("float32"), np.array(transformed_head_mesh.vertices), np.array(transformed_head_mesh.triangles), R_ab.astype(
+                "float32"), translation_ab.astype("float32"), R_ba.astype("float32"), translation_ba.astype(
+                    "float32"), euler_ab.astype("float32"), euler_ba.astype("float32"),            
+            
+            
         # the switch of src and target is intentional
         # it seems to improve performance if we use the 0 centered pcd (head) as source 
         # TODO change it all together everywhere

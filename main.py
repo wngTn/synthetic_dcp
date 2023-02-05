@@ -15,7 +15,7 @@ from lib.core.function_filterreg import evaluate_filterreg
 from lib.data.data_synthetic import SmplSynthetic, SMPLAugmentation
 from lib.net.dcp import DCP
 from lib.net.prnet import PRNet
-from lib.data.test_data import TestData, collate
+from lib.data.test_data import TestData
 from lib.registration.FilterReg import FilterReg
 from lib.registration.ICP import ICP
 from lib.registration.Aligner import Aligner
@@ -25,7 +25,7 @@ from lib.core.configs import get_cfg_defaults
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Run training (only dcp/prnet) or testing')
-    parser.add_argument('--arc', help='architecture name', choices=['dcp', 'dcp_global','prnet', 'filterreg', 'filterreg_icp'], default='dcp')
+    parser.add_argument('--arc', help='architecture name', choices=['dcp', 'prnet', 'filterreg', 'filterreg_icp'], default='dcp')
     parser.add_argument('--data', help='synthetic/testing mode or realworld data testing', choices=['synthetic', 'real'], default="synthetic")
     args, _ = parser.parse_known_args()
     parser.add_argument('--cfg', help='configuration file name', type=str, default=f'configs/{args.arc}/default.yaml')
@@ -66,11 +66,7 @@ def main():
     torch.manual_seed(cfg.SEED)
     torch.cuda.manual_seed_all(cfg.SEED)
     np.random.seed(cfg.SEED)
-    
-    _init_(args, cfg)
-    
-    boardio = SummaryWriter(log_dir=f"checkpoints/{args.exp_name}")
-    textio = IOStream(f"checkpoints/{args.exp_name}/run.log")
+
     if args.data == "real":
         realworld_data_loader = DataLoader(TestData(1024, 1024, load=["mesh", "pcd"]), num_workers=os.cpu_count())
 
@@ -78,7 +74,7 @@ def main():
             global_feature = args.arc == "dcp_global"
             net = DCP(cfg, global_feature = global_feature).cuda()
             
-            net.load_state_dict(torch.load("checkpoints\dcp_trainsynthetic_02_04-17_01_52\models\model.best.t7"))
+            net.load_state_dict(torch.load("checkpoints\dcp_synthetic_02_05-18_32_55\models\model.best.t7"))
 
             with torch.no_grad():
                 net.eval()
@@ -96,7 +92,10 @@ def main():
         else:
             raise NotImplementedError()
     else:
+        _init_(args, cfg)
         
+        boardio = SummaryWriter(log_dir=f"checkpoints/{args.exp_name}")
+        textio = IOStream(f"checkpoints/{args.exp_name}/run.log")
         train_loader = DataLoader(
             SmplSynthetic(split='train',
                         num_output_points=cfg.TRAINING.NUM_POINTS,
@@ -119,9 +118,10 @@ def main():
         )
         
         if args.arc in ["dcp", "dcp_global"]:
-            global_feature = args.arc == "dcp_global"
+            global_feature = "global" if args.arc == "dcp_global" else "per_point"
             net = DCP(cfg, global_feature = global_feature).cuda()
-            # for transfer learning comment out
+            # Transfer learning here
+            # comment following line out
             # net.load_state_dict(torch.load("./pretrained/dcp_v2.t7"), strict=False)
             train_dcp(args, cfg, net, train_loader, test_loader, boardio, textio)
         elif args.arc == "prnet":
@@ -153,7 +153,7 @@ def main():
         else:
             raise NotImplementedError()
 
-    boardio.close()
+        boardio.close()
 
 
 if __name__ == "__main__":

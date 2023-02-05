@@ -80,7 +80,7 @@ def test(args, aligner, test_loader, net = None, is_filterreg = False):
 
                 tf_matrix = aligner.align_meshes((src, meshes[0]))            
 
-                dump[it] = { "rot" : tf_matrix[:3, :3].tolist(), "trans" : tf_matrix[:3, 3].tolist()}
+                dump[it] = { "rot" : np.linalg.inv(tf_matrix[:3, :3]).tolist(), "trans" : tf_matrix[:3, 3].tolist()}
             else:
                 src = src.cuda()
                 target = target.cuda()

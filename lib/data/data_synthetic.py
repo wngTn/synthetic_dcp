@@ -115,9 +115,9 @@ class SmplSynthetic(Dataset):
         # if we keep it as is the target remains at origin in both
         # therefore we need to augment the source to mimic translation we expect to see during testing
         translation_ab = np.array([
-            random.choice((-1, 1)) * np.random.uniform(0.075, 0.1),
-            random.choice((-1, 1)) * np.random.uniform(0.075, 0.1),
-            random.choice((-1, 1)) * np.random.uniform(0.075, 0.1),
+            random.choice((-1, 1)) * np.random.uniform(0.025, 0.1),
+            random.choice((-1, 1)) * np.random.uniform(0.025, 0.1),
+            random.choice((-1, 1)) * np.random.uniform(0.025, 0.1),
         ])
 
         # if self.split == 'overfit':

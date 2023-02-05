@@ -13,23 +13,23 @@ def evaluate_filterreg(aligner, data_loader):
     for i, data in enumerate(tqdm(data_loader, total = len(data_loader))):
 
         src, target, target_vertices, target_triangles, rotation_ab, translation_ab, rotation_ba, translation_ba, euler_ab, euler_ba = data
-        rotations_ab.append(rotation_ba)
-        translations_ab.append(translation_ba)
-        eulers_ab.append(euler_ba)
+        rotations_ab.append(rotation_ab)
+        translations_ab.append(translation_ab)
+        eulers_ab.append(euler_ab)
         
         src = src[0].T
         target = target[0].T
         target_vertices = target_vertices[0]
         target_triangles  = target_triangles[0]
 
-        target_mesh = o3d.geometry.TriangleMesh(vertices=o3d.utility.Vector3dVector(target_vertices), triangles=o3d.utility.Vector3iVector(target_triangles))
+        # target_mesh = o3d.geometry.TriangleMesh(vertices=o3d.utility.Vector3dVector(target_vertices), triangles=o3d.utility.Vector3iVector(target_triangles))
 
-        tf_matrix = aligner.align_meshes((src, target_mesh))
-        rotations_ab_pred.append(np.linalg.inv(tf_matrix[:3, :3]))
-        translations_ab_pred.append(tf_matrix[:3, 3])
+        # tf_matrix = aligner.align_meshes((src, target_mesh))
+        # rotations_ab_pred.append(np.linalg.inv(tf_matrix[:3, :3]))
+        # translations_ab_pred.append(tf_matrix[:3, 3])
         
-        # rotations_ab_pred.append([[0,0,0], [0,0,0], [0,0,0]])
-        # translations_ab_pred.append([[0,0,0]])
+        rotations_ab_pred.append([[0,0,0], [0,0,0], [0,0,0]])
+        translations_ab_pred.append([[0,0,0]])
 
         # pcd = o3d.geometry.PointCloud()
 

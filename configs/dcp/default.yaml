@@ -1,7 +1,7 @@
 NET:
   EMB_NN: 'dgcnn'
-  POINTER: 'identity'
-  HEAD: 'mlp'
+  POINTER: 'transformer'
+  HEAD: 'svd'
   EMB_DIMS: 512
   N_BLOCKS: 1
   N_HEADS: 4
@@ -11,7 +11,7 @@ NET:
 SEED: 1234
 
 TRAINING:
-  BATCH_SIZE: 10
+  BATCH_SIZE: 2
   EPOCHS: 250
   LR: 1e-3
   MOMENTUM: 0.9

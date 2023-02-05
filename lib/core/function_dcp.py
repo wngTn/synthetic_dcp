@@ -48,9 +48,9 @@ def one_epoch(cfg, net, data_loader, opt, boardio, epoch, is_train):
 
     if is_train:
         net.train()
-    else:
-        net.eval()
-        evaluate_real_data(net)
+    # else:
+    #     net.eval()
+    #     evaluate_real_data(net)
 
 
     total_loss = 0

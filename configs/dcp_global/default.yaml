@@ -1,0 +1,25 @@
+NET:
+  EMB_NN: 'dgcnn'
+  POINTER: 'transformer'
+  HEAD: 'svd'
+  EMB_DIMS: 512
+  N_BLOCKS: 1
+  N_HEADS: 4
+  FF_DIMS: 1
+  DROPOUT: 0.0
+
+SEED: 1234
+
+TRAINING:
+  BATCH_SIZE: 2
+  EPOCHS: 250
+  LR: 1e-3
+  MOMENTUM: 0.9
+  CYCLE: False
+  NUM_POINTS: 1024
+  FACTOR: 4
+
+
+TESTING:
+  BATCH_SIZE: 10
+  MODEL: 'checkpoints/01_18-08_46_57/models/model.latest.t7'

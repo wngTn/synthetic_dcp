@@ -1,0 +1,50 @@
+from yacs.config import CfgNode as CN
+
+_C = CN()
+
+_C.NET = CN()
+_C.NET.EMB_NN = "dgcnn"
+_C.NET.POINTER = "transformer"
+_C.NET.HEAD = "svd"
+_C.NET.EMB_DIMS = 512
+_C.NET.N_BLOCKS = 1
+_C.NET.N_HEADS = 4
+_C.NET.FF_DIMS = 1024
+_C.NET.DROPOUT = 0.0
+
+_C.SEED = 1234
+
+# --------------------
+# add config stuff for prnet
+_C.NET.N_ITERS = 3
+_C.NET.N_BLOCKS = 1
+_C.NET.N_KEYPOINTS = 512
+_C.NET.N_SUBSAMPLED_POINTS = 768
+_C.NET.DISCOUNT_FACTOR = 0.9
+_C.NET.MODEL_PATH = ''
+_C.NET.FEATURE_ALIGNMENT_LOSS = 0.1
+_C.NET.CYCLE_CONSISTENCY_LOSS = 0.1
+_C.NET.TEMP_FACTOR = 100
+_C.NET.CAT_SAMPLER = "gumbel_softmax"
+# --------------------
+
+
+_C.TRAINING = CN()
+_C.TRAINING.BATCH_SIZE = 5
+_C.TRAINING.USE_SGD = False
+_C.TRAINING.EPOCHS = 5
+_C.TRAINING.LR = 1e-3
+_C.TRAINING.MOMENTUM = 0.9
+_C.TRAINING.CYCLE = False
+_C.TRAINING.NUM_POINTS = 1024
+_C.TRAINING.FACTOR = 4
+
+
+_C.TESTING = CN()
+_C.TESTING.BATCH_SIZE = 5
+_C.TESTING.MODEL = ""
+
+
+
+def get_cfg_defaults():
+    return _C.clone()

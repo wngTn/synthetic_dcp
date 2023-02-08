@@ -109,7 +109,7 @@ The rest of the project is working as is.
 
 ## Contributors
 
-- [Johannes Volk](linkedin.com/in/jovo/)
+- [Johannes Volk](https://www.linkedin.com/in/jovo/)
 - Tony Wang
 - Yushan Zheng
 - Yutong Hou

@@ -24,7 +24,7 @@ from lib.core.testing import test
 from lib.core.configs import get_cfg_defaults
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Run training (only dcp/prnet) or testing')
+    parser = argparse.ArgumentParser(description='Run training (only dcp/prnet) or testing on real/synthetic data')
     parser.add_argument('--arc', help='architecture name', choices=['dcp', 'prnet', 'filterreg', 'filterreg_icp'], default='dcp')
     parser.add_argument('--data', help='synthetic/testing mode or realworld data testing', choices=['synthetic', 'real'], default="synthetic")
     args, _ = parser.parse_known_args()
@@ -70,9 +70,8 @@ def main():
     if args.data == "real":
         realworld_data_loader = DataLoader(TestData(1024, 1024, load=["mesh", "pcd"]), num_workers=os.cpu_count())
 
-        if args.arc in ["dcp", "dcp_global"]:
-            global_feature = args.arc == "dcp_global"
-            net = DCP(cfg, global_feature = global_feature).cuda()
+        if args.arc in ["dcp"]:
+            net = DCP(cfg).cuda()
             
             net.load_state_dict(torch.load("checkpoints\dcp_synthetic_02_05-18_32_55\models\model.best.t7"))
 
@@ -117,12 +116,11 @@ def main():
             drop_last=False,
         )
         
-        if args.arc in ["dcp", "dcp_global"]:
-            global_feature = "global" if args.arc == "dcp_global" else "per_point"
-            net = DCP(cfg, global_feature = global_feature).cuda()
+        if args.arc in ["dcp"]:
+            net = DCP(cfg).cuda()
             # Transfer learning here
             # comment following line out
-            # net.load_state_dict(torch.load("./pretrained/dcp_v2.t7"), strict=False)
+            net.load_state_dict(torch.load("./pretrained/dcp_v2_synthetic.t7"), strict=False)
             train_dcp(args, cfg, net, train_loader, test_loader, boardio, textio)
         elif args.arc == "prnet":
             net = PRNet(cfg, args).cuda()

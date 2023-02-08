@@ -280,9 +280,8 @@ class PointNet(nn.Module):
 
 
 class DGCNN(nn.Module):
-    def __init__(self, emb_dims=512, feature="global"):
+    def __init__(self, emb_dims=512):
         super(DGCNN, self).__init__()
-        self.feature = feature
         self.conv1 = nn.Conv2d(6, 64, kernel_size=1, bias=False)
         self.conv2 = nn.Conv2d(64, 64, kernel_size=1, bias=False)
         self.conv3 = nn.Conv2d(64, 128, kernel_size=1, bias=False)
@@ -293,14 +292,6 @@ class DGCNN(nn.Module):
         self.bn3 = nn.BatchNorm2d(128)
         self.bn4 = nn.BatchNorm2d(256)
         self.bn5 = nn.BatchNorm2d(emb_dims)
-
-        self.linear1 = nn.Linear(emb_dims*2, 512, bias=False)
-        self.bn6 = nn.BatchNorm1d(512)
-        self.dp1 = nn.Dropout(p=0.0)
-        self.linear2 = nn.Linear(512, 512)
-        self.bn7 = nn.BatchNorm1d(512)
-        self.dp2 = nn.Dropout(0.0)
-        self.linear3 = nn.Linear(512, emb_dims)
 
     def forward(self, x):
         batch_size, num_dims, num_points = x.size()
@@ -322,23 +313,7 @@ class DGCNN(nn.Module):
         
         x = F.relu(self.bn5(self.conv5(x)))
 
-        # (B, 1024)
-        if self.feature == "global":
-            x1 = F.adaptive_max_pool1d(x.squeeze(), 1).view(batch_size, -1)
-            x2 = F.adaptive_avg_pool1d(x.squeeze(), 1).view(batch_size, -1)
-            x = torch.cat((x1, x2), 1)
-
-            x = F.leaky_relu(self.bn6(self.linear1(x)), negative_slope=0.2)
-            x = self.dp1(x)
-            x = F.leaky_relu(self.bn7(self.linear2(x)), negative_slope=0.2)
-            x = self.dp2(x)
-            # (B, 1024)
-            x = self.linear3(x)
-            x = x.unsqueeze(2).repeat(1, 1, 3)
-
-        else:
-            # (B, 1024, NUM_POINTS)
-            x = x.view(batch_size, -1, num_points)
+        x = x.view(batch_size, -1, num_points)
 
         return x
 
@@ -471,14 +446,14 @@ class SVDHead(nn.Module):
 
 
 class DCP(nn.Module):
-    def __init__(self, cfg, global_feature = False):
+    def __init__(self, cfg):
         super(DCP, self).__init__()
         self.emb_dims = cfg.NET.EMB_DIMS
         self.cycle = cfg.TRAINING.CYCLE
         if cfg.NET.EMB_NN == "pointnet":
             self.emb_nn = PointNet(emb_dims=self.emb_dims)
         elif cfg.NET.EMB_NN == "dgcnn":
-            self.emb_nn = DGCNN(emb_dims=self.emb_dims, feature=global_feature)
+            self.emb_nn = DGCNN(emb_dims=self.emb_dims)
         else:
             raise Exception("Not implemented")
 

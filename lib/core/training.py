@@ -176,11 +176,8 @@ def train_prnet(args, cfg, net, train_loader, test_loader, boardio):
         print("Use Adam")
         opt = optim.Adam(net.parameters(), lr=cfg.TRAINING.LR, weight_decay=1e-4)
         
-    epoch_factor = cfg.TRAINING.EPOCHS / 100.0
+    scheduler = MultiStepLR(opt, milestones=[5, 10, 15, 20, 25], gamma=0.1)
 
-    scheduler = MultiStepLR(opt,
-                            milestones=[int(30*epoch_factor), int(60*epoch_factor), int(80*epoch_factor)],
-                            gamma=0.1)
 
     info_test_best = None
 
@@ -188,19 +185,17 @@ def train_prnet(args, cfg, net, train_loader, test_loader, boardio):
         _ = net._one_epoch(epoch=epoch, data_loader=train_loader, opt=opt, boardio=boardio, is_train = True)
         
         # this is absurd.... eval takes more memory than training as there are gradients computed regardless.... therefore deactivate it like this
-        if not cfg.TRAINING.OVERFIT:
-            with torch.no_grad():
-                info_test = net._one_epoch(epoch=epoch, data_loader=test_loader, boardio=boardio, is_train = False)
-                evaluate_real_data(net)
+        with torch.no_grad():
+            info_test = net._one_epoch(epoch=epoch, data_loader=test_loader, boardio=boardio, is_train = False)
+            #evaluate_real_data(net)
 
         scheduler.step()
-        if not cfg.TRAINING.OVERFIT:
-            if info_test_best is None or info_test_best['loss'] > info_test['loss']:
-                info_test_best = info_test
-                info_test_best['stage'] = 'best_test'
+        if info_test_best is None or info_test_best['loss'] > info_test['loss']:
+            info_test_best = info_test
+            info_test_best['stage'] = 'best_test'
 
-                net.save('checkpoints/%s/models/model.best.t7' % args.exp_name)
-            net.logger.write(info_test_best)
+            net.save('checkpoints/%s/models/model.best.t7' % args.exp_name)
+        net.logger.write(info_test_best)
 
         net.save('checkpoints/%s/models/model.%d.t7' % (args.exp_name, epoch))
         gc.collect()

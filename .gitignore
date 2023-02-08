@@ -4,6 +4,7 @@ data/smpl_models/smpl
 checkpoints/
 lib/data/modelnet40_ply_hdf5_2048
 data/smpl_training_poses.pkl
+data/smpl_models
 output_debug/*
 assets/*.ply
 *.jpg
